@@ -5,6 +5,7 @@
 \wlog{zjuthesis version: \zjuthesisversion}
 
 \RequirePackage{kvoptions}
+\RequirePackage{amsmath}
 
 \SetupKeyvalOptions{
     family=zjuthesis,
@@ -112,3 +113,28 @@
 \input{config/path}
 \input{config/commands}
 \input{config/format/format}
+
+%----------------------------------------
+% theorem and theorem-like environments %
+%----------------------------------------
+% \numberwithin{equation}{chapter}
+% \theoremstyle{definition}
+
+\newtheorem{thm}{定理}[chapter]
+\newtheorem{alg}[thm]{算法}
+\newtheorem{asm}[thm]{假设}
+\newtheorem{axm}[thm]{公理}
+\newtheorem{coro}[thm]{推论}
+\newtheorem{defn}[thm]{定义}
+%\newtheorem{exm}{Example}[chapter]
+%\newtheorem{exc}[exm]{Exercise}
+% number examples and exercises with thms.
+\newtheorem{exm}[thm]{例}
+\newtheorem{exc}[thm]{练习}
+\newtheorem{frm}[thm]{公式}
+\newtheorem{lem}[thm]{引理}
+\newtheorem{ntn}{记号}
+\newtheorem{prop}[thm]{命题}
+\newtheorem{rem}{注记}[chapter]
+\newtheorem{rul}[thm]{规则}
+\renewcommand{\proofname}{证明}
