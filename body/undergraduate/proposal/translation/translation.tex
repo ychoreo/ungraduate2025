@@ -2,14 +2,474 @@
 
 \newrefsection
 
-\chapter{外文翻译}
+\chapter{外文翻译：加权粗糙度测量的平滑样条计算}
+\begin{center}
+  作者：Carl de Boor\\
+  原文出处：Mathematical Models and
+  Methods in Applied Sciences, 2001, 11: 33-41.
+\end{center}
 
-\sectionnonum{摘要}
+% \sectionnonum{摘要}
 
-\section{节标题}
+\section{引言}
+由 Schoenberg [S64] 和 Reinsch [R67], [R71] 提出的（三次）平滑样条，
+特别是在 Craven 和 Wahba [CW79] 引入广义交叉验证以自动选择平滑参数后，
+已成为最常用的样条。本文的目的是通过 B 样条推导出\textbf{加权}
+平滑样条的计算细节，以期推广其使用。
+
+$\lambda$-加权平滑样条是
+\begin{equation}
+  \label{eq:minimumFunctional}
+  \rho\sum_{j} w_{j}\left( y_{j}-f(x_{j}) \right)^{2}
+  +\int_{a}^{b}\lambda(t)(D^{m}f)(t)^{2}\mathrm{d}t
+\end{equation}
+在所有$f$属于
+\begin{displaymath}
+  X:=L_{2}^{(m)}[a, b]
+\end{displaymath}
+的唯一最小化，其中给定在$[a,b]$上的数据点
+$x_{1}<\cdots <x_{N}$，数据$y=(y_{j})$，由正权重元素（通常等于1）
+组成的权重向量$w=(w_{j})$，平滑参数$\rho\in(0,+\infty)$，
+自然数$m$，以及非负可积函数$\lambda$。
+
+当$\rho\to +\infty$时，这个加权平滑样条收敛到（自然）
+$\lambda$加权\textbf{插值}样条，后者已经存在一段时间了，
+至少可以追溯到 Cinquin 的论文 [C81] 和 K. Salkauskas 的独立论文 [Sa84]
+（另见 Foley [Fo86]），尽管仅在数据点处有分段常数权重且仅适用于
+$m=2$。事实上，更一般的加权样条已经在 [KW71] 中出现，
+但仅适用于光滑的$\lambda$，因为那里的发展是通过 L 样条进行的。
+Kulkarni 和 Laurent [KL91] 引入了权重为
+分段多项式函数$q$的倒数的加权样条（并命名为\textbf{ Q 样条}）。
+这些样条与分段常数权重的加权样条具有相同的优点，即它们是分段多项式，
+但如果权重函数连续甚至更好，则这些样条会更加平滑。
+它们也独立地出现在 [BSa92] 中。
+更一般权重的分段常数权重近似在 [SaB92], [BSa93] 中进行了考虑。
+
+上述关于插值加权样条的论文列表远非详尽。
+但我只能找到一篇讨论加权\textbf{平滑}样条的论文（即 [KL91]，详细介绍
+了$m=2$且$\lambda=1/q$的情况，其中$q$是连续折线），
+并且找不到用于构建加权平滑样条的程序。
+另一方面，熟悉加权样条的人不会感到惊讶的是，
+只需极少改动即可将现有构建标准平滑样条的程序调整为生成加权平滑样条，
+前提是权重$\lambda$为分段常数且仅在数据点处间断
+（或者更一般地，为分段多项式的倒数且仅在数据点处间断）。
+即使断点也允许出现在数据点之外的地方，所需的调整也非常简单。
+进行这样的修改似乎非常值得，因为它使得平滑样条的塑造具有更大的灵活性。
+\section{推导}
+在我看来（以及其他一些人，例如 [A92] 及其参考文献），
+将~(\ref{eq:minimumFunctional})的最小化视为内积空间中最佳逼近的特殊情况
+似乎是最简单的。由于这不是标准方法，我花时间给出细节，
+当然，并不声称结果是新的。
+
+使用线性映射
+\begin{align*}
+  \alpha:X\to Y&:=\mathbb{R}^{N}:\quad
+                 f\mapsto f|_{x}:= \left( f(x_{j})  \right)_{j=1}^{N},\\
+  \beta:X\to Z&:=L_{2}[a,b]:\quad
+                f\mapsto D^{m}f,
+\end{align*}
+将$X$嵌入到 Hilbert 空间
+\begin{displaymath}
+  H:=Y\times Z
+\end{displaymath}
+中，其自然内积为
+\begin{displaymath}
+  \langle (f,g),(h,k)\rangle
+  :=\rho\langle f,h\rangle_{Y}+\langle g,k\rangle_{Z},
+\end{displaymath}
+其中
+\begin{align*}
+  \langle f,g\rangle_{Y}&:=\sum_{j}w_{j}f_{j}g_{j},
+                          \quad f,g\in \mathbb{R}^{N},\\
+  \langle f,g\rangle_{Z}&:=\int_{a}^{b}\lambda fg,
+                          \quad f,g\in L_{2}[a,b].
+\end{align*}
+
+按我的假设$0<\rho<+\infty$，这里唯一的问题是
+\begin{displaymath}
+  X\to H:\ f\mapsto \left(\alpha(f),\beta(f)\right)
+\end{displaymath}
+是否是一个嵌入，以及在这个嵌入下，$X$是否成为$H$的闭子空间。
+对于前者，充要条件是
+\begin{displaymath}
+  \ker\alpha \cap \ker \beta=\{0\},
+\end{displaymath}
+并且由于
+\begin{displaymath}
+  \ker\alpha =\{f\in X:\ f|_{x}=0\},\quad
+  \ker \beta=\Pi_{<m}
+\end{displaymath}
+（次数小于$m$的多项式空间），
+该充要条件成立当且仅当$N\ge m$，我从现在开始假设这一点。
+至于后者，本质上是断言$D$，从而$D^{m}$，是一个闭线性映射。
+明确地，我假设标准表示定理
+\begin{equation}
+  \label{eq:standardRepresentationX}
+  f=T_{a,m}f+R\beta(f),\quad f\in X,
+\end{equation}
+其中$T_{a,m}f$是$f$在$a$处的$m$阶 Taylor 多项式，且
+\begin{displaymath}
+  R:Z\to X:\
+  g\mapsto \frac{1}{(m-1)!}
+  \int_{a}^{b}(\cdot -s)^{m-1}_{+}g(s)\mathrm{d}s.
+\end{displaymath}
+这将$X$识别为有限维线性子空间（因此是闭的）和闭子空间$R(Z)$
+的和 $\Pi_{<m}+R(Z)$，因此$X$本身是闭的。
+
+因此，平滑样条$f_{\rho}$是从$X\subset H$到元素
+$(y,0)\in H$的唯一最佳逼近，故其特征是，误差
+$(y,0)-(\alpha(f_{\rho}),\beta(f_{\rho}))$垂直于$X\subset H$，即
+\begin{equation}
+  \label{eq:errorPerpX}
+  \rho \langle y-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}
+  +\langle -\beta(f_{\rho}),\beta(f) \rangle_{Z}=0
+  \qquad \forall f\in X.
+\end{equation}
+由于$\ker\beta=\Pi_{<m}$，~(\ref{eq:errorPerpX}) 意味着
+\begin{equation}
+  \label{eq:errorPerpPolym}
+  \langle y-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}=0
+  \qquad \forall f\in \Pi_{<m}
+\end{equation}
+以及，结合~(\ref{eq:standardRepresentationX})和这一点，
+(\ref{eq:errorPerpX}) 意味着
+\begin{equation}
+  \label{eq:errorPerpZ}
+  \rho\langle y-\alpha(f_{\rho}),\alpha(Rg) \rangle_{Y}
+  =\langle \beta(f_{\rho}),g \rangle)_{Z}
+  \qquad \forall g\in Z.
+\end{equation}
+反之，~(\ref{eq:errorPerpPolym}) -~(\ref{eq:errorPerpZ})
+ 意味着~(\ref{eq:errorPerpX})。
+
+由于~(\ref{eq:errorPerpZ}) 的左边作为$g$的函数是一个连续线性泛函，
+故它可以表示为$\langle z,g \rangle_{Z}$，其中$z\in Z$。
+明确地，令$h:=y-\alpha(f_{\rho})$，
+\begin{align*}
+  \langle y-\alpha(f_{\rho}),\alpha(Rg) \rangle_{Y}
+  &=\sum_{j}w_{j}h_{j}
+    \frac{1}{(m-1)!}\int_{a}^{b}(x_{j}-s)_{+}^{m-1}g(s)\mathrm{d}s\\
+  &=\int_{a}^{b}\frac{1}{(m-1)!}\sum_{j}w_{j}h_{j}(x_{j}-s)_{+}^{m-1}
+    g(s)\mathrm{d}s\\
+  &=\left\langle \frac{1}{\lambda (m-1)!}
+    \sum_{j}w_{j}h_{j}(x_{j}-\cdot)_{+}^{m-1},g\right\rangle_{Z}.
+\end{align*}
+因此，~(\ref{eq:errorPerpZ})等价于
+\begin{equation}
+  \label{eq:mthderfrho}
+  \frac{\rho}{(m-1)!}\sum_{j}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-\cdot)_{+}^{m-1}
+  =\lambda D^{m}f_{\rho}.
+\end{equation}
+这表明$\lambda D^{m}f_{\rho}$是阶数为$m$的分段多项式，其断点序列为$x$，
+因此$f_{\rho}$本身，根据定义，是一个$2m$阶的（$\lambda$）加权样条。
+此外，$\lambda D^{m}f_{\rho}$在$x_{N}$的右侧消失。
+然而，由~(\ref{eq:errorPerpPolym})，
+\begin{displaymath}
+  \frac{\rho}{(m-1)!}\sum_{j}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-\cdot)^{m-1}=0,
+\end{displaymath}
+因此，结合$(x_{j}-t)_{+}^{m-1}
+=(x_{j}-t)^{m-1}-(-1)^{m-1}(t-x_{j})_{+}^{m-1}$，也有
+\begin{equation}
+  \label{eq:mthderfrhoEquiv}
+  \frac{\rho (-1)^{m}}{(m-1)!}\sum_{j}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(\cdot-x_{j})_{+}^{m-1}
+  =\lambda D^{m}f_{\rho},
+\end{equation}
+表明$\lambda D^{m}f_{\rho}$也在$x_{1}$的左侧消失。因此，我们可以记
+\begin{equation}
+  \label{eq:mthderfrhoLinearComp}
+  \lambda D^{m}f_{\rho}=:\sum_{k}B_{k,m,x}c_{k},
+\end{equation}
+其中$B_{k,m,x}$是节点为$x_{k},\cdots,x_{k+m}$的归一化 B 样条，即
+\begin{displaymath}
+  \begin{aligned}
+    B_{k,m,x}(t)
+    &=(x_{k+m}-x_{k})[x_{k},\cdots,x_{k+m}](\cdot - t)_{+}^{m-1}\\
+    &=:\sum_{j}(x_{j}-t)_{+}^{m-1}c_{j,k},
+  \end{aligned}
+\end{displaymath}
+因此
+\begin{displaymath}
+  c_{j,k}=
+    \begin{cases}
+      (x_{k+m}-x_k)/{\prod\{ (x_{j}-x_{i}):i\in\{k,\cdots,k+m\}
+      \backslash\{j\} \}}, \quad &j=k,\cdots,k+m;\\
+      0,\quad&\text{其他}.
+    \end{cases}
+\end{displaymath}
+遵循在特殊情况$\lambda=1$下的标准术语，称任何满足
+(\ref{eq:mthderfrhoLinearComp}) 的$f_{\rho}$
+为\textbf{具有断点序列$x$的阶数为$2m$的自然（$\lambda$）加权样条}。
+
+现在，将~(\ref{eq:mthderfrho}) 中的$\lambda D^{m}f_{\rho}$以这种方式表示
+并比较$(x_{j}-\cdot)_{+}^{m-1}$的系数，我们得到
+\begin{equation}
+  \label{eq:relationOfCc}
+  \rho W(y-\alpha(f_{\rho}))=Cc,
+\end{equation}
+其中
+\begin{displaymath}
+  W:=\text{diag}(w),\qquad
+  C:=(m-1)!(c_{j,k}:j=1,\cdots,N;k=1,\cdots,N-m),
+\end{displaymath}
+且$c$是~(\ref{eq:mthderfrhoLinearComp})中所定义的
+$\lambda D^{m}f_{\rho}$的 B 样条系数序列。接下来，注意到对
+任意$f\in X$，
+\begin{equation}
+  \label{eq:PeanoKernelForDividedDifference}
+  (C^{T}\alpha(f))_{j}
+  =(m-1)!(x_{j+m}-x_{j})[x_{j},\cdots,x_{j+m}]f
+  =\int_{a}^{b}B_{j,m,x}D^{m}f,
+\end{equation}
+用到了（适当归一化） B 样条是差商的 Peano 核这一事实。
+因此，任意满足~(\ref{eq:relationOfCc}) 的$\alpha(f_{\rho})$
+自动满足~(\ref{eq:errorPerpPolym})，因为对于任意这样的
+$\alpha(f_{\rho})$和任意$f\in X$，
+\begin{displaymath}
+  \langle y-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}
+  =\alpha(f)^{T}W(y-\alpha(f_{\rho}))
+  =\alpha(f)^{T}C \frac{c}{\rho}
+  =(C^{T}\alpha(f))^{T}\frac{c}{\rho},
+\end{displaymath}
+而由~(\ref{eq:PeanoKernelForDividedDifference})，
+对$f\in\Pi_{<m}$有$C^{T}\alpha(f)=0$。
+由于~(\ref{eq:relationOfCc}) 与~(\ref{eq:mthderfrhoLinearComp})
+推出~(\ref{eq:mthderfrho})，从而推出~(\ref{eq:errorPerpZ})，
+这表明，在~(\ref{eq:mthderfrhoLinearComp}) 的条件下，
+(\ref{eq:relationOfCc}) 等价于~(\ref{eq:errorPerpX})。
+因此，我们现在专注于~(\ref{eq:relationOfCc})。
+
+为此，从~(\ref{eq:PeanoKernelForDividedDifference})与
+(\ref{eq:mthderfrhoLinearComp})得，
+\begin{equation}
+  \label{eq:relationOfCtc}
+  C^{T}\alpha(f_{\rho})=Ac,
+\end{equation}
+其中
+\begin{displaymath}
+  A:= \left( \int_{a}^{b}\frac{1}{\lambda}B_{j,m,x}B_{k,m,x}:\
+  j,k = 1,\cdots, N-m \right).
+\end{displaymath}
+将~(\ref{eq:relationOfCc}) 以
+\begin{equation}
+  \label{eq:frhoValueFromc}
+  \alpha(f_{\rho})=y-W^{-1}C\cdot \frac{c}{\rho}
+\end{equation}
+的形式代入~(\ref{eq:relationOfCtc})，得到的方程
+\begin{equation}
+  \label{eq:lineareqnOfc}
+  C^{T}y=(C^{T}W^{-1}C+\rho A)\frac{c}{\rho}
+\end{equation}
+在给定数据$y$的情况下可以稳定地求解$u:=c/\rho$
+（因为其系数矩阵是对称正定的）。由此，我们可以直接从
+(\ref{eq:frhoValueFromc}) 得到平滑值$\alpha(f_{\rho})$。
+为了得到$f_{\rho}$，将得到的结果
+$D^{m}f_{\rho}=(1/\lambda)\sum_{j}B_{j,m,x}c_{j}$积分$m$次，
+得到$f:=D^{-m}(D^{m}f_{\rho})$，它与$f_{\rho}$仅相差某个
+$q\in\Pi_{<m}$。可以确定这个$q$为唯一的$q\in\Pi_{<m}$，使得
+$\alpha(q+f)=\alpha(f_{\rho})$，即
+$\alpha(q)=\alpha(f_{\rho})-\alpha(f)$，其中向量$\alpha(f_{\rho})$
+从~(\ref{eq:frhoValueFromc}) 计算得出。
+
+只有在$m$次积分的时候，粗糙度度量中权重$\lambda$的选择才开始起作用
+（除了假设$\lambda$是可测且本性正的，以确保$\langle\ ,\ \rangle_{Z}$
+是内积）。对于特殊情况$\lambda=1$，可以使用标准公式，例如见
+[pgs : p.150]，进行积分得到$f_{\rho}$，它为具有简单内部节点
+（$x_{i}:i=2,\cdots,N-1$）的$2m$阶自然样条。
+虽然积分可以在更大的类中以封闭形式进行，但在这一点上，我将注意力
+放在那些使得$f_{\rho}$仍为分片多项式的$\lambda$上，特别是最简单的这些，
+也就是仅在$x_{i}$处有断点的分片常值函数，即
+\begin{equation}
+  \label{eq:lambdaInPoly}
+  \lambda\in\Pi_{0,x}.
+\end{equation}
+考虑更一般的选择并不难，即$\lambda$是一个分片多项式的倒数，
+如 [KL91] 和 [BSa92] 中所述。
+
+\section{误差随$\rho$变化的行为}
+根据~(\ref{eq:lineareqnOfc})，当$\rho\to 0^{+}$时，
+$u:=c/\rho$收敛到$(C^{T}W^{-1}C)^{-1}C^{T}y$，
+因此$c=\rho u\to 0$，此时$f_{0+}$是唯一最小化
+$\|\alpha(q)\|$的多项式$q\in\Pi_{<m}$。相反，当$\rho\to +\infty$时，
+(\ref{eq:lineareqnOfc})趋近于方程$C^{T}y=Ac$，结合
+(\ref{eq:relationOfCtc})，此时$f_{\infty -}$是唯一以节点$x$插值给定数据
+的$2m$阶自然（$\lambda$）加权样条。
+
+作为$\rho$的函数，误差
+\begin{displaymath}
+  E_{\rho}:=\|y-\alpha(f_{\rho})\|^{2}
+\end{displaymath}
+随着$\rho$的增加而减小，如下所示：对于任意$f\in X$，
+\begin{displaymath}
+  \mathbb{R}_{+}\to \mathbb{R}:\
+  \rho\mapsto \rho\|y-\alpha(f)\|^{2}+\|\beta(f)\|^{2}
+\end{displaymath}
+是一条直线，因此函数
+\begin{displaymath}
+  F:\mathbb{R}_{+}\to \mathbb{R}:\
+  \rho\mapsto \min_{f\in X}
+  \left( \rho\|y-\alpha(f)\|^{2}+\|\beta(f)\|^{2} \right)，
+\end{displaymath}
+作为一组具有非负$y$截距和非负斜率的直线的逐点最小值，是连续的、
+非递减的、下凹的，且在无穷远处被其渐近线（上方）界定，
+该渐近线是高度为$\|\beta(f_{\infty-})\|^{2}$的常直线，
+而在另一极端（即原点处的切线）的渐近线是
+通过原点且斜率为$\|y-\alpha(f_{0+})\|^{2}$的直线。由于直线
+\begin{displaymath}
+  \rho\mapsto \rho\|y-\alpha(f_{\rho})\|^{2}+\|\beta(f_{\rho})\|^{2}
+\end{displaymath}
+是$F$在$\rho$处的切线，我们有
+\begin{displaymath}
+  DF(\rho)=E_{\rho},
+\end{displaymath}
+表明$E_{\rho}$随$\rho$增大而减小，相应地，
+$\|\beta(f_{\rho})\|^{2}$（切线的$y$截距）随$\rho$增大而增大。
+
+由于这个原因，Reinsch 和其他人建议，在$E_{\rho}$不超过给定
+容忍度$tol$的约束下，选择尽可能小的平滑参数$\rho$。此外，
+Reinsch 指出，函数
+\begin{displaymath}
+  G:\ \rho\mapsto \frac{1}{\|y-\alpha(f_{\rho})\|}
+\end{displaymath}
+是上凹的，且随着$\rho$的增大而逐渐变得线性，因此将
+从$\rho=0$开始的 Newton 法应用到关于$\rho$的方程
+\begin{equation}
+  \label{eq:rhoEqnForNewton}
+  \frac{1}{E_{\rho}^{\frac{1}{2}}}
+  -\frac{1}{(tol)^{\frac{1}{2}}}=0
+\end{equation}
+必定会收敛，并且收敛速度相当快，尤其当这个解是“大”的。
+此外，由~(\ref{eq:frhoValueFromc})得
+\begin{displaymath}
+  E_{\rho}=u^{T}C^{T}W^{-1}Cu,
+\end{displaymath}
+也得到$DE_{\rho}=2u^{T}C^{T}W^{-1}CDu$，而由~(\ref{eq:lineareqnOfc})，
+$Du$通过线性系统
+\begin{displaymath}
+  -Au=(C^{T}W^{-1}C+\rho A)Du
+\end{displaymath}
+唯一确定。特别地，对$\rho=0$，这表示$DE_{\rho}=-2u^{T}Au$，
+其中$u=(C^{T}W^{-1}C)^{-1}C^{T}y$，
+无论如何都需要通过~(\ref{eq:frhoValueFromc})计算$\alpha(f_{\rho})$。
+这为在$\rho=0$处对~(\ref{eq:rhoEqnForNewton})
+应用牛顿法的初始步骤提供了所需的斜率。
+对于后续步骤，我将避免计算$DE_{\rho}$
+（这需要解一个线性系统），而是使用割线法。
+
+另一个有趣的极限情况涉及某些$x_{j}$的合并。
+如果数据$y$来自一个光滑函数且相关权重表现适当，
+则$r\le m$个相邻点的合并导致平滑问题，
+其中$\alpha$还涉及多重点处的所有阶数$<r$的导数，相应地，
+$f_{\rho}$在该多重点处仅具有$2m-1-r$阶连续导数。
+当然，这种$\alpha$的相关公式可以通过上述方式直接推导，
+即采用带有重复节点的差商以及对应的带有重复节点的B样条，
+按标准方法即可完成。
+特别是，\textbf{完全三次平滑样条}有一些实际用途，其中
+$\alpha(f)=(Df(x_{1}),f|_{x},Df(x_{N}))$。
 
 
-参考~\cite{zjuthesisrules, zjuthesis}
+\section{ B 样条 Gram 矩阵的数值构造}
+编写一个用于计算一般$m$的$f_{\rho}$的程序还有一个最后的障碍，
+即构造 B 样条的（加权）内积矩阵$A$。
+这是$\lambda$的选择变得重要的第二个点。我们选择
+\begin{displaymath}
+  \lambda=:\sum_{j=1}^{N-1}\lambda_{j}\chi_{(x_{j},x_{j+1})}
+  \in\Pi_{0,x}
+\end{displaymath}
+而不仅仅是$\lambda=1$，则计算$A$中的元素并不复杂，因为对于很小的$m$，
+积分
+\begin{displaymath}
+  A_{j,k}=\int_{a}^{b}\frac{1}{\lambda} B_{j,m,x}B_{k,m,x},
+  \qquad j,k=1,\cdots,N-m,
+\end{displaymath}
+按断点区间逐段计算都是容易的。当然，对于$\lambda=1$，
+文献中有稳定的递推关系可用于计算这些积分，例如在 [BLS76] 中。
+在这种情况下，也可以使用公式
+\begin{displaymath}
+  \int B_{i,k}B_{j,k}=(-1)^{k}\frac{(2k-1)!}{(k!)^{2}}
+  (t_{i+k}-t_{i})(t_{j+k}-t_{j})
+  [t_{i},\cdots,t_{i+k}]_{x}[t_{j},\cdots,t_{j+k}]_{y}
+  (x-y)_{+}^{2k-1},
+\end{displaymath}
+该公式在 [JS68] 中已经以略微不同的形式出现用于此目的。
+
+对于$m=1,2$（可能，甚至是$m=3$），直接计算矩阵元素很容易。
+
+$m=1$时：在这种情况下，$B_{j,m,x}=\chi_{[x_{j},x_{j+1})}$。
+相应地，在$(x_{j},x_{j+1})$上$Df_{\rho}=c_{j}/\lambda_{j}$。
+此外，$A$是对角矩阵，其对角元为
+$\Delta x_{j}/\lambda_{j},\ j=1,\cdots,N-1$。
+
+$m=2$时：在这种情况下，$B_{j,m,x}$是分片线性函数，在所有除了断点
+$x_{j}$外的$x$上取值为0，在$x_{j}$上取值为1。相应地，
+\begin{displaymath}
+  D^{2}f_{\rho}(t)=
+  \begin{cases}
+    c_{j}/\lambda_{j}&\text{ 当 }t=x_{j}^{+};\\
+    c_{j-1}/\lambda_{j-1}&\text{ 当 }t=x_{j}^{-}.
+  \end{cases}
+\end{displaymath}
+因此，一旦从~(\ref{eq:lineareqnOfc}) 得到$c$（或者$c/\rho$），
+结合从~(\ref{eq:frhoValueFromc}) 计算得到的$\alpha(f_{\rho})$，
+那么局部三次片段的构造是直接的。
+
+此外，令$t=x_{j}+s\Delta x_{j}$，则
+\begin{displaymath}
+  \int_{x_{j}}^{x_{j+1}}B_{j,2}(t)^{2}\mathrm{d}t
+  =\Delta x_{j}\int_{0}^{1}s^{2}\mathrm{d}s=\frac{\Delta x_{j}}{3},
+\end{displaymath}
+而
+\begin{displaymath}
+  \int_{x_{j}}^{x_{j+1}}B_{j-1,2}(t)B_{j,2}(t)\mathrm{d}t
+  =\int_{x_{j}}^{x_{j+1}}B_{j,2}(t)\mathrm{d}t
+  -\int_{x_{j}}^{x_{j+1}}B_{j,2}(t)^{2}\mathrm{d}t
+  =\frac{\Delta x_{j}}{2}-\frac{\Delta x_{j}}{3}
+  =\frac{\Delta x_{j}}{6}.
+\end{displaymath}
+因此，$A$是三对角矩阵，其一般行形式为
+\begin{displaymath}
+  \frac{1}{6}
+  \left( \frac{\Delta x_{j}}{\lambda_{j}},
+    2 \left( \frac{\Delta x_{j}}{\lambda_{j}}+
+      \frac{\Delta x_{j+1}}{\lambda_{j+1}}\right),
+    \frac{\Delta x_{j+1}}{\lambda_{j+1}}
+  \right),
+  \qquad j=1,\cdots, N-2.
+\end{displaymath}
+注意，对于$\lambda=1$，这样的行中的元素相加的和为
+$(x_{j+2}-x_{j})/2=B_{j,2,x}$，正如它们应该的那样。
+
+$m>2$时：对于$m=3$，积分式$\int_{x_{r}}^{x_{r+1}}B_{i}B_{j}/\lambda$
+的显式表达式已经足够复杂，注意被积函数是一个$2m$阶的多项式，
+似乎使用 Gauss 求积法更为简单，因此
+$m$个点的 Gauss-Legendre 求积公式
+\begin{displaymath}
+  \int_{x_{r}}^{x_{r+1}}f
+  \approx
+  \Delta x_{r}\sum_{j=1}^{m}w_{j}f(x_{r}+\Delta x_{r}\tau_{j})
+\end{displaymath}
+会给出精确的积分值（在舍入误差下）。形式上，
+\begin{displaymath}
+  A=B^{T}VB,
+\end{displaymath}
+其中
+\begin{displaymath}
+  V:=\text{diag}((\Delta x_{r}/\lambda_{r})w:\ r=1,\cdots,N-1),
+\end{displaymath}
+$B$为 B 样条配置矩阵
+\begin{displaymath}
+  B:=(B_{j,m,x}(t_{i}):i=1,\cdots,m(N-1);j=1,\cdots,N-m),
+\end{displaymath}
+而
+\begin{displaymath}
+  t:=(x_{r}+\Delta x_{r}\tau:\ r=1,\cdots,N-1).
+\end{displaymath}
+然而，人们会希望充分利用这里所有矩阵都是几乎块对角矩阵
+（在 [BW80] 中介绍的意义下）的事实，
+且如何做到这一点将主要取决于所使用的编程语言。
+
 
 \begingroup
     \linespreadsingle{}

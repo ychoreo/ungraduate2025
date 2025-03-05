@@ -1,21 +1,304 @@
 \cleardoublepage
 \newrefsection
+
 \chapter{文献综述}
 
 \section{背景介绍}
-\par 正文格式与具体要求\cite{zjuthesisrules}
+\par 我们的研究对象为曲线拟合。
+所谓曲线拟合，通俗地说，就是给定一组平面上的数据点，
+如何找到一条曲线，使得该曲线能较好地拟合这些点。
+然而，“较好地拟合”应当是什么样的拟合方式呢？
+事实上，拟合的方式有很多种，它们是根据特定的拟合目标而制定出来的。
+一般地，有以下几种比较经典的问题。
+\begin{defn}[离散最小二乘(DLS)函数逼近，
+  discrete least squares functions approximation]
+  \label{def:DiscreteLeastSquaresFunctionsApproximation}
+  若给定一组严格递增的数据点$\mathbf{x}=\{x_{i}\}_{i=1}^{N}$
+  和对应的权重$\mathbf{w}=\{w_{i}\}_{i=1}^{N}$，
+  其中$w_{1},w_{2},\cdots,w_{N}> 0$。则对于
+  一组给定的值$\mathbf{y}=\{y_{i}\}_{i=1}^{N}$和一个给定的
+  函数线性空间$X$，如果函数$f\in X$满足
+  \begin{equation}
+    \label{eq:DiscreteLeastSquaresFunctionsApproximation}
+    f = \arg\min_{g\in X}\sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},
+    % \forall g\in X, \quad
+    % \sum_{i=1}^{N}w_{i}(y_{i}-f(x_{i}))^{2}\le
+    % \sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},
+  \end{equation}
+  则称$f$为$\{(x_{i},y_{i})\}_{i=1}^{N}$在$X$下的
+  离散最小二乘函数逼近。\cite{GuideToSplines}
+\end{defn}
 
-\subsection{小节}
+\begin{defn}[三次平滑函数拟合, cubic smoothing functions fitting]
+  \label{def:cubicSmoothingFunctionsFitting}
+  给定一组严格递增的数据点$\mathbf{x}=\{x_{i}\}_{i=1}^{N}$，一个
+  函数线性空间$X$和一个平滑参数（smoothing parameter）$p\in [0,1]$。
+  则对于一组给定的值$\mathbf{y}=\{y_{i}\}_{i=1}^{N}$，
+  称函数$f\in X$是$\{(x_{i},y_{i})\}_{i=1}^{N}$在$X$下的
+  三次平滑函数拟合\cite{GuideToSplines}，如果
+  \begin{equation}
+    \label{eq:cubicSmoothingSpline}
+    % \forall g\in X,\quad
+    % pE(f)+(1-p)F(D^{2}f)\le
+    f= \arg\min_{g\in X}\left( pE(g)+(1-p)F(D^{2}g)\right),
+  \end{equation}
+  其中
+  \begin{align}
+    \label{eq:errorMeasure}
+    E(g)&:=\sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},\\
+    \label{eq:roughnessMeasure}
+    F(D^{m}g)&:=\int_{x_{1}}^{x_{N}}
+               \lambda(t)|D^{m}g(t)|^{2}\mathrm{d}t
+  \end{align}
+  分别称为$g$的误差度量（error measure）和
+  粗糙度度量（roughness measure），
+  $w_{i}>0$称为$x_{i}$处的权重误差（error weight），
+  $\lambda(t)$称为粗糙度权重（roughness measure），
+  是在$[x_{1},x_{N}]$上关于$\mathbf{x}$的分片常值函数，
+  即
+  \begin{equation}
+    \label{eq:lambdat}
+    \lambda(t)\equiv \lambda_{i}\ge 0,\
+  t\in [x_{i},x_{i+1}],\quad i=1,2,\cdots,N-1.
+  \end{equation}
+\end{defn}
 
-\subsubsection{小节}
+\begin{defn}[平滑函数拟合, smoothing functions fitting]
+  \label{def:smoothingFunctionsFitting}
+  沿用定义~\ref{def:cubicSmoothingFunctionsFitting} 中的记号，
+  并给定正整数$m$和容忍度（tolerance）$S\ge 0$。
+  如果存在函数$f\in X$，使得$E(f)\le S$，且
+  \begin{equation}
+    \label{eq:smoothingFunctionsFitting}
+    f = \arg \min_{g\in X\text{ with } E(g)\le S} F(D^{m}g),
+  \end{equation}
+  则称$f$是$\{(x_{i},y_{i})\}_{i=1}^{N}$在$X$下误差度量不超过$S$的
+  $2m$阶平滑函数拟合。\cite{SmoothingBySplineFunctions}
+\end{defn}
+
+自然地，我们想确定各定义中的函数空间。而样条函数拟合
+相比于其他函数有一些优势，例如，
+样条能通过局部节点划分实现灵活建模，规避全局
+高阶多项式的 Runge 现象\cite{GuideToSplines,hastie2009elements}；
+样条一般是连续且平滑的，更易于做数据拟合\cite{green1993nonparametric}；
+利用样条计算的效率更高，
+得到的结果更为稳定\cite{GuideToSplines,hastie2009elements}。
+由于样条函数的良好性质，对于各定义中的问题，我们试图
+在样条空间
+$$\mathbb{S}_{n}^{n-1}(\mathbf{x})
+=\{g\in C^{n-1}([x_{1},x_{N}]):
+  \ g|_{[x_{i},x_{i+1}]}\in \mathbb{P}_{n},\ i=1,2,\cdots,N-1\}$$
+或与其近似的空间中寻找一个样条函数，
+这个函数能够解答所定义的问题。
+
+DLS 样条逼近
+（对应定义~\ref{def:DiscreteLeastSquaresFunctionsApproximation}）
+的提出来源于直接的 DLS 函数逼近。在此基础上也延伸了一些研究方向：
+Baramidze 和 Lai \cite{BARAMIDZE20111091}
+研究了稳定局部基空间中 DLS 球面样条的收敛性，
+揭示了误差限对三角网格尺寸的依赖关系；
+Cromme、Kunath 和 Krebs \cite{Cromme2017DiscreteAB}
+提出一种自由节点一阶样条算法，
+可在有限步骤内获得离散实值函数的最佳全局最小二乘近似，
+并通过医学应用（如最小杀菌浓度 MBC、最小抑菌浓度 MIC）验证其有效性。
+
+平滑样条（对应定义~\ref{def:cubicSmoothingFunctionsFitting} 和
+\ref{def:smoothingFunctionsFitting}）
+的提出可追溯至 Schoenberg \cite{Schoenberg1964}，
+其研究基于 Whittaker \cite{Whittaker1922}提出的平滑思想。
+平滑样条最初在数值分析领域发展，
+Wahba \cite{Wahba1990}等人后续研究揭示了其统计学特性。
+因此，其开始广泛应用于数据分析和各应用领域。
+在仿真领域，de Boer、Nicola 和 Rubinstein \cite{deBoer2000AdaptiveIS}
+利用三次平滑样条估计稀有事件概率中的转移概率函数；
+Keys 和 Rees \cite{Keys2004ASM}则通过
+薄板平滑样条（thin-plate smoothing splines）
+提出了一种序贯仿真优化策略；而 Pedro 和 Isabel \cite{Santos2010}
+将平滑样条用于非参数化元建模。
+
+因此，我们希望掌握 DLS 样条逼近和平滑样条拟合的基础理论，
+并进行相应的编程实现。
 
 \section{国内外研究现状}
 
 \subsection{研究方向及进展}
 
+\subsubsection{ DLS 样条逼近}
+关于定义~\ref{def:DiscreteLeastSquaresFunctionsApproximation} 中的问题，
+经典教材\cite{GuideToSplines}指出，可以使用正规方程组解决此问题，
+最终得到一个 B 格式的样条函数。
+
+具体地，假设一个递增节点组$\mathbf{t}=\{t_{i}\}_{i=1}^{n+k}$和对应的一组$k$阶
+B 样条基函数$\{B_{i}\}_{i=2}^{n+1}$。
+则定义~\ref{def:DiscreteLeastSquaresFunctionsApproximation} 中的$X$可以定义为
+$X:=\text{span}\{B_{2},B_{3},\cdots,B_{n+1}\}$。
+并且，我们可以假设待求的样条$f=\sum_{j=1}^{n}a_{j}B_{j+1}$。
+接着，我们考虑一个合适的内积：
+\begin{defn}[离散内积]
+  \label{def:DiscreteInnerProduct}
+  对于有限个互不相同的数据点$x_{1},x_{2},\cdots,x_{N}$，
+  定义$\mathbb{R}$上的离散内积
+  \begin{equation}
+    \label{eq:DiscreteInnerProduct}
+    \langle u(x),v(x)\rangle
+    =\sum_{i=1}^{N}w_{i}u(x_{i})v(x_{i}),
+  \end{equation}
+  其中函数$u,v:\mathbb{R}\to \mathbb{R}$，$w_{i}>0$为$x_{i}$处的权重。
+\end{defn}
+
+通过这个定义，结合 Gram 矩阵的相关知识，我们可以得到
+关于$\mathbf{a}=[a_{1},a_{2},\cdots,a_{n}]^{T}$的矩阵方程：
+\begin{equation}
+  \label{eq:DLSSplinesApproximationviaNormalEquations}
+  G(B_{2},B_{3},\cdots,B_{n+1})^{T}\mathbf{a}=\mathbf{c},
+\end{equation}
+其中$G(B_{2},B_{3},\cdots,B_{n+1})=
+\left(\left\langle B_{i+1}, B_{j+1}\right\rangle\right)_{n\times n}$
+为 Gram 矩阵，
+$\mathbf{c}:=[\langle y,B_{2}\rangle,
+\langle y,B_{3}\rangle,\cdots,\langle y,B_{n+1}\rangle]^{T}$,
+函数$y:\mathbb{R}\to \mathbb{R}$满足$y(x_{i})=y_{i},\ i=1,2,\cdots,N$，
+内积$\langle\cdot,\cdot\rangle$
+由~(\ref{eq:DiscreteInnerProduct})定义。
+
+记$A:=G(B_{2},B_{3},\cdots,B_{n+1})^{T}$。
+由 B 样条的定义知，当$|i-j|\ge k$时，
+$B_{i}B_{j}\equiv 0$，从而$\langle B_{i},B_{j}\rangle=0$。
+因此$A$的形式类似为（以$k=4,n=10$为例）
+\begin{displaymath}
+  \begin{aligned}
+    \begin{pmatrix}
+        \ast& \ast& \ast& \ast&     &     &     &     &     &     \\
+        \ast& \ast& \ast& \ast& \ast&     &     &     &     &     \\
+        \ast& \ast& \ast& \ast& \ast& \ast&     &     &     &     \\
+        \ast& \ast& \ast& \ast& \ast& \ast& \ast&     &     &     \\
+            & \ast& \ast& \ast& \ast& \ast& \ast& \ast&     &     \\
+            &     & \ast& \ast& \ast& \ast& \ast& \ast& \ast&     \\
+            &     &     & \ast& \ast& \ast& \ast& \ast& \ast& \ast\\
+            &     &     &     & \ast& \ast& \ast& \ast& \ast& \ast\\
+            &     &     &     &     & \ast& \ast& \ast& \ast& \ast\\
+            &     &     &     &     &     & \ast& \ast& \ast& \ast
+    \end{pmatrix}\\
+  \end{aligned}
+  ,
+\end{displaymath}
+在$k$固定，$n$很大时是一个对称稀疏矩阵。进一步，它还是一个正定矩阵。
+因此，我们可以对$A$进行$LDL^{T}$分解，
+从而只需依次解决三个容易的矩阵方程：
+$L\mathbf{a}_{0}=\mathbf{c}$，$D\mathbf{a}_{1}=\mathbf{a}_{0}$，
+$L^{T}\mathbf{a}=\mathbf{a}_{1}$。如此，我们便得到了$f$的表达式。
+
+\subsubsection{三次平滑样条拟合}
+对于定义~\ref{def:cubicSmoothingFunctionsFitting} 中的问题，
+针对$\lambda\equiv 1$的情况，$X=\mathbb{S}_{3}^{2}(\mathbf{x})$。
+经典教材\cite{GuideToSplines}指出，
+样条函数$f\in X$是存在唯一的，且满足自然边界条件
+（即$f''(x_{1})=f''(x_{N})=0$）。
+它是 pp 格式的样条函数。
+相似的计算方法在 Reinsch
+的文献\cite{SmoothingBySplineFunctions}亦有体现。
+
+此方法的核心是，我们需要求解以下的线性方程组：
+\begin{equation}
+  \label{eq:cubicSmoothingSplineEquation}
+  (pR+6(1-p)Q^{T}D^{2}Q)\mathbf{u}=Q^{T}\mathbf{y},
+\end{equation}
+其中
+\begin{align*}
+  D&=\text{diag}\left(w_{1}^{-\frac{1}{2}},w_{2}^{-\frac{1}{2}},\cdots,
+  w_{N}^{-\frac{1}{2}}\right),\\
+  R&=\left(
+  \begin{array}{ccccc}
+	2(h_1+h_2)& h_2&& &\\
+	h_2& 2(h_2+h_3)& h_3&&\\
+	& h_3  &2(h_3+h_4)  &\ddots&\\
+	&&\ddots&\ddots&h_{N-2}\\
+	&&& h_{N-2} &2(h_{N-2}+h_{N-1})
+  \end{array}
+  \right)\in \mathbb{R}^{(N-2)\times(N-2)},\\
+   Q&=\left(
+    \begin{array}{cccc}
+      \frac{1}{h_1}& & &\\
+      -\frac{1}{h_1}-\frac{1}{h_2}& \frac{1}{h_{2}}& &\\
+      \frac{1}{h_2}& -\frac{1}{h_2}-\frac{1}{h_3}  &\ddots  &\\
+                   &\frac{1}{h_{3}}&\ddots&\frac{1}{h_{N-2}}\\
+                   &&\ddots&-\frac{1}{h_{N-2}}-\frac{1}{h_{N-1}}\\
+      &&&\frac{1}{h_{N-1}}
+    \end{array}
+      \right)\in \mathbb{R}^{N\times (N-2)},\\
+  h_{i}&=x_{i+1}-x_{i},\ i=1,2,\cdots,N-1.
+\end{align*}
+
+记系数矩阵为$A$，由$D,\ Q$和$R$的结构知，$A$是一个对称正定的五对角矩阵。
+因此，可以对$A$使用$LDL^{T}$分解，其中单位下三角矩阵$L$的带宽为2。
+
+\subsubsection{平滑样条拟合}
+对于定义~\ref{def:smoothingFunctionsFitting} 中的问题，
+针对$\lambda\equiv 1$的情况，
+Reinsch \cite{SmoothingBySplineFunctions}对
+三次自然边界条件下 pp 格式的样条给出了一套解决方案。
+其主要思想是，
+相比于定义~\ref{def:cubicSmoothingFunctionsFitting} 中的问题而言，
+只需计算使得$E(f)=S$成立的$\rho$的值。因为假设已知$\rho$的值，
+只需找到$f$，使如下式子成立：
+\begin{equation}
+  \label{eq:SmoothingSplineEquation}
+  f=\arg \min_{g\in X}\left(\rho E(g)+ F(D^{2}g)\right).
+\end{equation}
+注意到若令~(\ref{eq:cubicSmoothingSpline})中的$p=\rho/(\rho+1)$，
+则
+求解~(\ref{eq:SmoothingSplineEquation})中$f$的方法和
+求解~(\ref{eq:cubicSmoothingSpline})中$f$的方法一致）。
+而计算$\rho$的方法在 Reinsch 的文献
+\cite{SmoothingBySplineFunctions,SmoothingBySplineFunctionsII}
+中有所提及，其主要思想是使用 Newton 法求解一个关于$\rho$的方程：
+\begin{equation}
+  \label{eq:rhoEqnForNewton}
+  g(\rho):= \frac{1}{E_{\rho}^{\frac{1}{2}}}
+  -\frac{1}{S^{\frac{1}{2}}}=0,
+\end{equation}
+其中$E_{\rho}=E(f)$是一个关于$\rho$的函数（因为$f$的求解与$\rho$有关）。
+这个方程虽然等价于$E(f)=S$，
+但因为$g(\rho)$的图像
+是上凹的，且随着$\rho$的增大会逐渐变得线性，因此
+用 Newton 法求解$g(\rho)=0$会收敛，且收敛得会很快。
+
 \subsection{存在问题}
 
+\subsubsection{ DLS 样条逼近}
+虽然正规方程组的解法在理论上可行，但当求解的规模越來越大时，
+系数矩阵的条件数会平方增长，这对求解精度是不利的。
+
+\subsubsection{三次平滑样条拟合}
+相关文献\cite{GuideToSplines,SmoothingBySplineFunctions}中
+均是对$\lambda\equiv 1$情形的解法表述，并没有提及
+$\lambda$不恒等于1时，样条函数$f$所在的空间，以及求解$f$的方法。
+
+\subsubsection{平滑样条拟合}
+目前，对于任意阶样条的情形仍不清楚。我们需要确定，在自然边界条件
+（即$D^{j}f(x_{1})=D^{j}f(x_{N})=0,\ j=m,m+1,\cdots,2m-2$）下，
+样条函数$f$是否存在且唯一。其次，由于样条可以是任意阶的，所以
+使用 pp 样条可能不如使用 B 样条方便。
+
+总而言之，对于同一组平面上的点，针对不同的拟合目标，会存在不同的解法，
+从而得到的样条函数不尽相同，会影响最后拟合出的曲线效果。
+
 \section{研究展望}
+对于 DLS 样条逼近问题，我们可以考虑使用 QR 分解的方法进行求解。
+其好处是，求解规模变大时，系数矩阵的条件数线性增长，相比于
+正规方程组而言应当有较高的求解精度。具体而言，
+我们可以仿照 B 样条插值问题所对应的方程，
+，类似地在拟合问题中能够得到一个超定方程组，其中系数矩阵为
+%样条配置矩阵（spline collocation matrix）。该矩阵是
+几乎块对角矩阵（almost block-diagonal matrix），
+可以对其进行块 QR 分解（block QR factorization）
+\cite{Boor1976SOLVEBLOKAP}，从而在最小二乘意义下求出方程组的解。
+
+对于三次平滑样条拟合，我们希望解决$\lambda$不恒等于1的情况。
+这可能需要我们确定一个新的函数空间，并且需要重新修改相关的理论。
+
+对于$2m$阶平滑样条拟合，我们可能需要以 B 样条基函数的形式来确定函数空间，
+并且需要制定新的理论，比如参考 de Boor 的论文\cite{Boor2001CALCULATIONOT}。
 
 \newpage
 \begingroup
