@@ -1,0 +1,593 @@
+\cleardoublepage
+\section{离散最小二乘样条逼近}
+\label{sec:FINALDLSSplinesApproximation}
+
+
+\begin{defn}[离散最小二乘逼近，
+  discrete least squares approximation]
+  \label{def:FINALDiscreteLeastSquaresApproximation}
+  若给定一组严格递增的数据点$\mathbf{x}=\{x_{i}\}_{i=1}^{N}$
+  和对应的权重$\mathbf{w}=\{w_{i}\}_{i=1}^{N}$，
+  其中$w_{1},w_{2},\cdots,w_{N}\ge 0$。则对于
+  一组给定的值$\mathbf{y}=\{y_{i}\}_{i=1}^{N}$和一个给定的
+  函数线性空间$X$，如果函数$f\in X$满足
+  \begin{equation}
+    \label{eq:FINALDiscreteLeastSquaresApproximation}
+    f = \arg\min_{g\in X}\sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},
+    % \forall g\in X, \quad
+    % \sum_{i=1}^{N}w_{i}(y_{i}-f(x_{i}))^{2}\le
+    % \sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},
+  \end{equation}
+  则称$f$为$\{(x_{i},y_{i})\}_{i=1}^{N}$在$X$下的
+  离散最小二乘逼近。
+\end{defn}
+
+  今后，不妨令所有$w_{i}>0$，因为若存在$i_{0}$使得$w_{i_{0}}=0$，
+  这相当于在~(\ref{eq:FINALDiscreteLeastSquaresApproximation})的求和式中
+  去掉$i=i_{0}$后的求和，仍然是一个有限和形式。
+
+  不难发现，若令函数$y:\mathbb{R}\to \mathbb{R}$满足$y(x_{i})=y_{i}$，
+  则~(\ref{eq:FINALDiscreteLeastSquaresApproximation})等价于
+  \begin{equation}
+    \label{eq:FINALDLSAToBest}
+    f = \arg\min_{g\in X}\|y-g\|^{2},
+    % \forall g\in X, \quad \|y-f\|^{2}\le\|y-g\|^{2}.
+  \end{equation}
+  其中$\|\cdot\|$为~(\ref{eq:FINALDiscreteNorm})中所定义的范数。
+  则由定义~\ref{def:FINALBestApproximation}，可以直接得到如下的推论。
+
+\begin{coro}
+  \label{coro:FINALDLSAisEquivToBest}
+  若$f:\mathbb{R}\to \mathbb{R}$为$\{(x_{i},y_{i})\}_{i=1}^{N}$在$X$下的
+  离散最小二乘逼近，则$f$是从$X$中得到的对$y$的最佳逼近，
+  其中函数$y:\mathbb{R}\to \mathbb{R}$满足$y(x_{i})=y_{i}$。反之亦然。
+\end{coro}
+
+在样条函数空间的框架下，
+定义~\ref{def:FINALDiscreteLeastSquaresApproximation} 所描述的问题可以
+具体为
+\begin{defn}[离散最小二乘(DLS)样条逼近，
+  discrete least squares splines approximation]
+  \label{def:FINALDLSSplinesApproximation}
+  已知递增节点组$\mathbf{t}=\{t_{i}\}_{i=1}^{n+k}$和对应的$k$阶
+  \textnormal{B} 样条基函数$\{B_{i}\}_{i=2}^{n+1}$（见定义 \ref{def:FINALbasicBspline}）。
+  若定义~\ref{def:FINALDiscreteLeastSquaresApproximation} 中的$X$为
+  $X:=\mathbb{S}_{k-1}^{k-2}(\mathbf{t})
+  =\textnormal{span}\{B_{2},B_{3},\cdots,B_{n+1}\}$，则满足
+  (\ref{eq:FINALDiscreteLeastSquaresApproximation})的$f\in X$
+  称为$\{(x_{i},y_{i})\}_{i=1}^{N}$的离散最小二乘样条逼近。
+\end{defn}
+
+  对于一般的 DLS 问题，有两种常见的解决方法，一种是正规方程组的方法，一种是
+  使用 QR 分解的方法。针对 DLS 样条逼近问题，我们一起来探讨这两种方法。
+
+
+\subsection{用正规方程组解决 DLS 样条逼近问题}
+\label{subsec:FINALDLSSplinesApproximationviaNormalEquations}
+
+为了使用正规方程组解决此问题，我们先介绍
+一般教材上对 Gram 矩阵的定义，
+以及如何用 Gram 矩阵解决 DLS 问题。
+
+% \begin{lem}
+%   \label{lem:FINALBestApproximationPerp}
+%   设$Y$为内积空间，
+%   $\{u_{1},u_{2},\cdots,u_{n}\}$是$X\subset Y$的一组基。若
+%   $\hat{\varphi}=\sum_{i=1}^{n}a_{i}u_{i}$是从$X$中得到的
+%   对$f\in Y$的最佳逼近，则
+%   \begin{equation}
+%     \label{eq:FINALBestApproximationPerp}
+%     (f-\hat{\varphi})\perp u_{j},\quad
+%     j=1,2,\cdots,n,
+%   \end{equation}
+%   其中“$\perp$”意味着正交性，即
+%   $u\perp v$等价于 $\langle u,v\rangle=0$.
+% \end{lem}
+
+\begin{defn}[Gram 矩阵]
+  \label{def:FINALGramMatrix}
+  设$u_{1},u_{2},\cdots,u_{n}$是内积空间$X$中的一列元素。定义
+  \begin{equation}
+    \label{eq:FINALGramMatrix}
+    \begin{aligned}
+      G  =G\left(u_1, u_2, \cdots, u_n\right)=
+          \left(\left\langle u_i, u_j\right\rangle\right)_{n\times n} 
+         =\left[\begin{array}{cccc}
+          \left\langle u_1, u_1\right\rangle &
+          \left\langle u_1, u_2\right\rangle &
+                                      \ldots &
+          \left\langle u_1, u_n\right\rangle \\
+          \left\langle u_2, u_1\right\rangle &
+          \left\langle u_2, u_2\right\rangle &
+                                      \ldots &
+          \left\langle u_2, u_n\right\rangle \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \left\langle u_n, u_1\right\rangle &
+          \left\langle u_n, u_2\right\rangle &
+                                      \ldots &
+           \left\langle u_n, u_n\right\rangle
+      \end{array}\right]
+    \end{aligned}
+  \end{equation}
+  为$u_{1},u_{2},\cdots,u_{n}$的 \textnormal{Gram} 矩阵。
+  % ，其行列式
+  % \begin{equation}
+  %   \label{eq:FINALGramMatrixDet}
+  %   g=g(u_{1},u_{2},\cdots,u_{n})=
+  %   \textnormal{det}(G\left(u_1, u_2, \cdots, u_n\right))
+  % \end{equation}
+  % 称为$u_{1},u_{2},\cdots,u_{n}$的 \textnormal{Gram} 行列式。
+\end{defn}
+
+% \begin{thm}
+%   \label{thm:FINALGramMatrixDetRange}
+%   对于任意$X$中的非$0$元素$u_{1},u_{2},\cdots,u_{n}$，成立
+%   \begin{equation}
+%     \label{eq:FINALGramMatrixDetRange}
+%     0\le g(u_{1},u_{2},\cdots,u_{n})\le
+%     \prod_{k=1}^{n}\|u_{k}\|^{2},
+%   \end{equation}
+%   其中第一个不等号取等当且仅当$u_{1},u_{2},\cdots,u_{n}$线性相关，
+%   第二个不等号取等当且仅当$u_{1},u_{2},\cdots,u_{n}$相互正交。
+% \end{thm}
+
+\begin{thm}
+  \label{thm:FINALNormalEquation}
+  设$X$为内积空间。
+  令$\hat{\varphi}=\sum_{i=1}^{n}a_{i}u_{i}$是从
+  $X$中线性无关的向量组$(u_{1},u_{2},\cdots,u_{n})$
+  构造出的对$w\in X$的最佳逼近，那么系数向量
+  $\mathbf{a}:=[a_{1},a_{2},\cdots,a_{n}]^{T}$
+  可以由以下线性方程组（称为正规方程组）唯一确定：
+  \begin{equation}
+    \label{eq:FINALNormalEquation}
+    G(u_{1},u_{2},\cdots,u_{n})^{T}\mathbf{a}=\mathbf{c},
+  \end{equation}
+  其中$\mathbf{c}:=[\langle w,u_{1}\rangle,
+                    \langle w,u_{2}\rangle,\cdots
+                    \langle w,u_{n}\rangle]^{T}$。
+\end{thm}
+% \begin{proof}
+%   对每个$j$，由引理~\ref{lem:FINALBestApproximationPerp} 知，
+%   $(w-\hat{\varphi})\perp u_{j}$。从而
+%   \begin{displaymath}
+%     \left\langle w-\sum_{i=1}^{n}a_{i}u_{i}, u_{j}\right\rangle = 0,
+%   \end{displaymath}
+%   即
+%   \begin{displaymath}
+%     \langle w,u_{j}\rangle = \sum_{i=1}^{n}a_{i}\langle u_{i},u_{j}\rangle,
+%   \end{displaymath}
+%   为方程组~(\ref{eq:FINALNormalEquation})的第$j$行。
+%   要证明方程组~(\ref{eq:FINALNormalEquation})解的唯一性，只需证
+%   $\text{det}(G(u_{1},u_{2},\cdots,u_{n}))\neq 0$。而这可以
+%   由定理~\ref{thm:FINALGramMatrixDetRange} 和
+%   $u_{1},u_{2},\cdots,u_{n}$的线性无关性得到。
+% \end{proof}
+
+接下来，我们使用它们来解决 DLS 样条逼近问题，得到如下定理。
+
+\begin{thm}
+  \label{thm:FINALDLSSplinesApproximationviaNormalEquations}
+  沿用定义~\ref{def:FINALDLSSplinesApproximation} 中的记号。
+  若$\mathbf{a}:=[a_{1},a_{2},\cdots,a_{n}]^{T}$是正规方程组
+  \begin{equation}
+    \label{eq:FINALDLSSplinesApproximationviaNormalEquations}
+    G(B_{2},B_{3},\cdots,B_{n+1})^{T}\mathbf{a}=\mathbf{c}
+  \end{equation}
+  的解，其中$\mathbf{c}:=[\langle y,B_{2}\rangle,
+  \langle y,B_{3}\rangle,\cdots,\langle y,B_{n+1}\rangle]^{T}$,
+  $y(x_{i}):=y_{i},\ i=1,2,\cdots,N$，内积$\langle\cdot,\cdot\rangle$
+  由~(\ref{eq:FINALDiscreteInnerProduct})定义。
+  则$f=\sum_{j=1}^{n}a_{j}B_{j+1}$
+  为$\{(x_{i},y_{i})\}_{i=1}^{N}$的 \textnormal{DLS} 样条逼近。
+\end{thm}
+\begin{proof}
+  由定理~\ref{thm:FINALNormalEquation}，
+  定义~\ref{def:FINALDLSSplinesApproximation} 和
+  推论~\ref{coro:FINALDLSAisEquivToBest} 即证。
+\end{proof}
+
+  要想得到定理~\ref{thm:FINALDLSSplinesApproximationviaNormalEquations} 
+  中的$f$，我们需要求解方程组
+  (\ref{eq:FINALDLSSplinesApproximationviaNormalEquations}) 以得到
+  $\mathbf{a}$。
+  记$$A:=G(B_{2},B_{3},\cdots,B_{n+1})^{T}
+  =\left(\left\langle B_{j+1}, B_{i+1}\right\rangle\right)_{n\times n}
+  =\left(\left\langle B_{i+1}, B_{j+1}\right\rangle\right)_{n\times n}.$$
+  由 B 样条的定义知，当$|i-j|\ge k$时，
+  $B_{i}B_{j}\equiv0$，从而$\langle B_{i},B_{j}\rangle=0$。
+  从而$A$的形式类似为（以$k=4,n=10$为例）
+  \begin{displaymath}
+    \begin{aligned}
+      \begin{pmatrix}
+          \ast& \ast& \ast& \ast&     &     &     &     &     &     \\
+          \ast& \ast& \ast& \ast& \ast&     &     &     &     &     \\
+          \ast& \ast& \ast& \ast& \ast& \ast&     &     &     &     \\
+          \ast& \ast& \ast& \ast& \ast& \ast& \ast&     &     &     \\
+              & \ast& \ast& \ast& \ast& \ast& \ast& \ast&     &     \\
+              &     & \ast& \ast& \ast& \ast& \ast& \ast& \ast&     \\
+              &     &     & \ast& \ast& \ast& \ast& \ast& \ast& \ast\\
+              &     &     &     & \ast& \ast& \ast& \ast& \ast& \ast\\
+              &     &     &     &     & \ast& \ast& \ast& \ast& \ast\\
+              &     &     &     &     &     & \ast& \ast& \ast& \ast
+      \end{pmatrix}\\
+    \end{aligned}
+    ,
+  \end{displaymath}
+  在$k$固定，$n$很大时是一个对称稀疏矩阵。
+
+  如果我们想确保正规方程组
+  (\ref{eq:FINALDLSSplinesApproximationviaNormalEquations}) 存在唯一解，
+  我们必须验证此离散内积确实是$\mathbb{S}_{k-1}^{k-2}(\mathbf{t})$上的一个内积。
+  由于$\|f\| = 0$意味着$f(x_{i})=0$对所有的$i$成立，
+  我们需要寻找关于$\mathbf{x}$的条件，使得
+  \begin{displaymath}
+    \forall i=1,2,\cdots,N,\ f(x_i) = 0
+    \quad\Longrightarrow \quad f\equiv 0. 
+  \end{displaymath}
+  为此，我们有以下引理。
+  \begin{lem}
+    \label{lem:FINALSWconditionForDLSspline}
+    对于$\mathbb{S}_{k-1}^{k-2}(\mathbf{t})$上的离散范数$\|\cdot\|$，
+    其为范数当且仅当存在$\mathbf{x}$的子序列$\{x_{j_{i}}\}_{i=1}^{n}$，使得
+    \begin{displaymath}
+      \forall i=1,2,\cdots,n,\quad t_i < x_{j_i} < t_{i+k}.
+    \end{displaymath}
+  \end{lem}
+  \begin{proof}
+    此证明可以由定义 \ref{def:FINALSplineCollocationMatrix}
+    和定理 \ref{thm:FINALSWSplinesApproximation} 直接得出。
+  \end{proof}
+
+  我们知道，使用正规方程组解决 DLS 问题时有一个弊端，随着求解问题规模的扩大，
+  系数矩阵的条件数通常会平方上升，这会对计算精度和时间效率造成一定的影响。
+  而使用 QR 分解来解决 DLS 问题，此方法随着
+  求解问题规模的扩大，系数矩阵的条件数是线性上升的。
+  因此，为追求求解效率，
+  我们使用 QR 分解来求解 DLS 样条逼近问题，并给出对应的算法。
+
+\subsection{用 QR 分解解决 DLS 样条逼近问题}
+\label{subsec:FINALDLSSplinesApproximationviaQRdecomp}
+
+  定义~\ref{def:FINALDLSSplinesApproximation} 所描述的问题，
+  $f$具有形式$f=\sum_{j=1}^{n}a_{j}B_{j+1}$。
+  要使其满足式子~(\ref{eq:FINALDiscreteLeastSquaresApproximation})，
+  我们希望对于每个$i$，$f(x_{i})$尽可能地靠近$y_{i}$。
+  如果它们可以完全相等，我们就能得到一个待解量为
+   $\mathbf{a}:=[a_{1},a_{2},\cdots,a_{n}]^{T}$的超定方程组。
+
+\begin{thm}
+  \label{thm:FINALDLSSplinesApproximationviaQRdecomp}
+  $f=\sum_{j=1}^{n}a_{j}B_{j+1}$是
+  $\{(x_{i},y_{i})\}_{i=1}^{N}$的 \textnormal{DLS} 样条逼近当且仅当
+  $\mathbf{a}:=[a_{1},a_{2},\cdots,a_{n}]^{T}$满足
+  \begin{equation}
+    \label{eq:FINALDLSSplinesApproximationviaQRdecomp}
+    \mathbf{a}=\arg\min_{\mathbf{u}\in \mathbb{R}^{n}}
+    \|C\mathbf{u}-\mathbf{y}\|_{2,\mathbf{w}}^{2}
+    =\arg\min_{\mathbf{u}\in \mathbb{R}^{n}}
+    \|D^{-1}(C\mathbf{u}-\mathbf{y})\|_{2}^{2},
+  \end{equation}
+  其中$C=(B_{j+1}(x_{i}))_{N\times n}$，$\mathbf{y}$被视为
+  $[y_{1},y_{2},\cdots,y_{N}]^{T}$，
+  \begin{align*}
+    \|\mathbf{v}\|_{2,\mathbf{w}}
+    :=\|D^{-1}\mathbf{v}\|_{2}
+    =\left(\mathbf{v}^{T}D^{-2}\mathbf{v}\right)^{\frac{1}{2}}=
+    \left(\sum_{i=1}^{N}w_{i}v_{i}^{2}\right)^{\frac{1}{2}},\quad
+    \mathbf{v}\in \mathbb{R}^{N},
+  \end{align*}
+  $D=\textnormal{diag}(w_{1}^{-\frac{1}{2}},w_{2}^{-\frac{1}{2}},\cdots,
+  w_{N}^{-\frac{1}{2}})$。
+\end{thm}
+\begin{proof}
+  注意到
+  \begin{align*}
+    (C\mathbf{a}-\mathbf{y})_{i}
+    =\sum_{j=1}^{n}a_{j}B_{j+1}(x_{i})-y_{i}
+    =f(x_{i})-y_{i},
+  \end{align*}
+  从而$\|C\mathbf{a}-\mathbf{y}\|_{2}^{2}
+  =\sum_{i=1}^{N}w_{i}(f(x_{i})-y_{i})^{2}$。接下来的证明由
+  定义~\ref{def:FINALDLSSplinesApproximation} 完成。
+\end{proof}
+
+  由定义~\ref{def:FINALDiscreteInnerProduct}，
+  若将$\mathbf{v}\in \mathbb{R}^{N}$看作一个函数
+  $v:\mathbb{R}\to \mathbb{R},v(x_{i})=v_{i}$，则
+  $\|\mathbf{v}\|_{2,\mathbf{w}}=\|v\|$，
+  其中$\|\cdot\|$由~(\ref{eq:FINALDiscreteNorm})定义。
+  所以在此意义上，可以将$\|\cdot\|_{2,\mathbf{w}}$看作$\|\cdot\|$。
+
+  由定理~\ref{thm:FINALDLSSplinesApproximationviaQRdecomp}，
+  我们需要求解超定方程组
+  \begin{equation}
+    \label{eq:FINALDLSSplinesQRmatrix}
+    D^{-1}C\mathbf{a}=D^{-1}\mathbf{y}.
+  \end{equation}
+  系数矩阵$D^{-1}C$的结构和$C$一样，
+  可以表达成如下形式 (以$N=18,n=8,k=4$为例)：
+  \begin{equation}
+    \label{eq:FINALABDmatrixEg}
+    \begin{pmatrix}
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast
+    \end{pmatrix},
+  \end{equation}
+  是一个几乎块对角（absolutely block-diagonal）矩阵。
+  我们先给出其定义，再指出求解此类矩阵方程所需的算法。
+  % 因此我们可以使用类似的算法
+  % 对这个矩阵进行 QR 分解，从而计算出最小二乘解$\mathbf{a}$。
+
+  \begin{defn}[几乎块对角矩阵\cite{Boor1976SOLVEBLOKAP}]
+    \label{def:FINALABDmatrix}
+    我们称矩阵$A\in \mathbb{R}^{m\times n}$（其中$m\ge n$）
+    是一个几乎块对角矩阵，
+    如果存在一个严格递增的序列
+    \begin{displaymath}
+      1=e_{1}<e_{2}<\cdots<e_{r+1}=m+1,
+    \end{displaymath}
+    使得对于任意$i=1,2,\cdots,r$，$A$中第$e_i$行到第$(e_{i+1} - 1)$行
+    的非$0$元素仅在第$\alpha_i$列到第$\beta_i$列里，其中
+    $\{\alpha_i\}$是严格递增序列，$\{\beta_i\}$是递增序列。
+  \end{defn}
+
+  \begin{exm}
+    \label{exm:FINALABDmatrix}
+    对于 (\ref{eq:FINALABDmatrixEg}) 中所展示的几乎块对角矩阵，我们有
+    \begin{displaymath}
+      \{e_{i}\}=\{1,6,9,15,19\},\
+      \{\alpha_{i}\}=\{1,2,3,5\},\
+      \{\beta_{i}\}=\{4,5,6,8\}.
+    \end{displaymath}
+  \end{exm}
+
+  对于一般矩阵，我们可以对其进行 QR 分解；而对于几乎块对角矩阵，
+  我们可以对其进行块 QR 分解（block QR factorization）。以下算法
+  揭示了如何对一个几乎块对角矩阵$A$进行块 QR 分解的过程。
+
+  \begin{algorithm}[htb]
+  \caption{块 QR 分解}
+  \label{alg:FINALblockQR}
+  \begin{algorithmic}[1] 
+    \STATE \textbf{function} $({Q}_{1},{Q}_{2},\cdots,{Q}_{r})= \text{BlockQR}(A)$
+    \STATE \quad $A_{1}\leftarrow A(e_{1}:e_{2}-1,\alpha_{1}:\beta_{1})$
+    \hfill
+      // 取$A$的\( e_1,\cdots,  e_{2} - 1 \) 行和
+      \( \alpha_1, \cdots, \beta_1 \) 列构成的子矩阵
+    \STATE \quad $(Q_{1},R_{1})=\text{QR}(A_{1})$
+    \hfill // 对$A_{1}$进行 QR 分解，得到$A_{1}=Q_{1}R_{1}$
+    \STATE \quad  $Q_1 \leftarrow \text{diag}(Q_1, I_{n-e_{2}+1})$
+    \hfill //  \( I_m \) 表示 \( m \times m \) 的单位矩阵
+    \STATE \quad \textbf{for} {$i=2 \text{ to } r$} \textbf{do}
+    \STATE \qquad \( e_i \leftarrow e_{i-1} + \alpha_i - \alpha_{i-1} \)
+    \STATE \qquad $A_{i}\leftarrow A(e_{i}:e_{i+1}-1,\alpha_{i}:\beta_{i})$
+    \STATE \qquad $(Q_{i},R_{i})=\text{QR}(A_{i})$
+    \STATE \qquad $Q_i \leftarrow \text{diag}(I_{e_{i}-1}, Q_i, I_{n-e_{i+1}+1})$
+    \STATE \quad \textbf{end for}
+    \STATE \textbf{end function}
+  \end{algorithmic}
+  \end{algorithm}
+
+  % \begin{alg}[块 QR 分解，block QR factorization]
+  %   \label{alg:FINALblockQR}
+  %   我们通过块 QR 分解将线性方程组 (\ref{eq:FINALDLSSplinesQRmatrix})
+  %   作为几乎块对角系统来求解，前提是样条配置矩阵
+  %   \( C = (B_{j+1}(x_i))_{N\times n} \) 是列满秩的。
+  %   记$A:=D^{-1}C$。具体步骤如下：
+
+  %   (BlockQR-1) 令$A_{1}:=A(e_{1}:e_{2}-1,\alpha_{1}:\beta_{1})$为
+  %   $A$的第 \( e_1 \) 行到第 \(  e_{2} - 1 \) 行和
+  %   第 \( \alpha_1 \) 到第 \( \beta_1 \) 列构成的子矩阵，
+  %   然后对 \( A_1 \) 应用 QR 分解，得到 \( A_1 = Q_1 R_1 \)。
+  %   取 \( \tilde{Q}_1 = \textnormal{diag}(Q_1, I_{n-e_{2}+1}) \)，
+  %   其中 \( I_m \) 表示 \( m \times m \) 的单位矩阵。
+  %   用矩阵 \( \tilde{Q}_1 \) 左乘矩阵$A$。
+
+  %   (BlockQR-2) 对于 \( i = 2, \cdots, r \)：
+  %   更新 \( e_i \leftarrow e_{i-1} + \alpha_i - \alpha_{i-1} \)。
+  %   % (a) 如果 \( e_{i} - e_{i-1} > \alpha_i - \alpha_{i-1} \)：
+  %   % 令$A_{i}=A(e_{i-1}+\alpha_{i}-\alpha_{i-1}:e_{i+1}-1,\alpha_{i}:\beta_{i})$，
+  %   % 然后对矩阵 \( A_i \) 应用 QR 分解，得到 \( A_i = Q_i R_i \)。
+  %   % 取 \( \tilde{Q}_i = \textnormal{diag}(I_{e_{i-1}+\alpha_{i}-\alpha_{i-1}-1}, Q_i, I_{n-e_{i+1}+1}) \)，
+  %   % 并用矩阵 \( \tilde{Q}_i \) 左乘矩阵$A$。
+  %   % 更新 \( e_i \leftarrow e_{i-1} + \alpha_i - \alpha_{i-1} \)。
+  %   % (b) 如果 \( e_i - e_{i-1} = \alpha_i - \alpha_{i-1} \)：
+  %   令$A_{i}=A(e_{i}:e_{i+1}-1,\alpha_{i}:\beta_{i})$，
+  %   然后对矩阵 \( A_i \) 应用 QR 分解, 得到 \( A_i = Q_i R_i \)。
+  %   取 \( \tilde{Q}_i = \textnormal{diag}(I_{e_{i}-1}, Q_i, I_{n-e_{i+1}+1}) \)，
+  %   并用矩阵 \( \tilde{Q}_i \) 左乘矩阵$A$。
+
+  %   (BlockQR-3) 矩阵 \( \tilde{A}:=\tilde{Q}_r \cdots \tilde{Q}_1 A \) 在此时是一个上三角矩阵。
+  %   而方程组 (\ref{eq:FINALDLSSplinesQRmatrix}) 的
+  %   右侧变为 \( \tilde{\mathbf{y}}:= \tilde{Q}_r \cdots \tilde{Q}_1 D^{-1}\mathbf{y} \)。
+  %   我们只需求解线性系统$\tilde{A}(1:n,:)\mathbf{a}=\tilde{\mathbf{y}}(1:n)$。
+  % \end{alg}
+
+  可以看到，块 QR 分解会对第一块小矩阵进行 QR 分解，
+  更新行 $e_{i}$ 后继续对第$i$个小矩阵进行 QR 分解，直到遍历所有小矩阵。
+  我们可以通过下面的例子简单了解此过程。
+
+  \begin{exm}
+    \label{exm:FINALblockQREg}
+    我们用算法 \ref{alg:FINALblockQR} 对~(\ref{eq:FINALABDmatrixEg}) 中的几乎块对角矩阵
+    进行处理。
+    \begin{eqnarray}
+    \begin{scriptsize}
+      \begin{aligned}
+        \begin{pmatrix}
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      \ast& \ast& \ast& \ast&  &  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast
+    \end{pmatrix}    
+        \overset{{Q}_1}{\longrightarrow}
+        \begin{pmatrix}
+      \ast& \ast& \ast& \ast&  &  &  &\\
+      {\color{red} 0}& \ast& \ast& \ast&  &  &  &\\
+      {\color{red} 0}& {\color{red} 0}& \ast& \ast&  &  &  &\\
+      {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& \ast&  &  &  &\\
+      {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          & \ast& \ast& \ast& \ast&  &  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast
+    \end{pmatrix}
+        \overset{{Q}_2}{\longrightarrow}
+        \begin{pmatrix}
+          \ast& \ast& \ast& \ast&  &  &  &\\
+              & \ast& \ast& \ast& {\color{red} \ast}  &  &  &\\
+              & {\color{red} 0}& \ast& \ast& {\color{red} \ast}&  &  &\\
+              & {\color{red} 0}& {\color{red} 0}& \ast& {\color{red} \ast}  &  &  &\\
+              & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} \ast}  &  &  &\\
+          & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &  &\\
+          & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &  &\\
+          & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  & \ast& \ast& \ast& \ast&  &\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast
+        \end{pmatrix}\\
+        \overset{{Q}_3}{\longrightarrow}
+        \begin{pmatrix}
+          \ast& \ast& \ast& \ast&  &  &  &\\
+              & \ast& \ast& \ast& \ast  &  &  &\\
+              & & \ast& \ast& \ast& {\color{red} \ast} &  &\\
+              & & {\color{red} 0}& \ast& \ast  & {\color{red} \ast} &  &\\
+              & & {\color{red} 0}& {\color{red} 0}& \ast  & {\color{red} \ast} &  &\\
+          & & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} \ast} &  &\\
+          & & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0} &  &\\
+          & & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0} &  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  & {\color{red} 0}& {\color{red} 0}& {\color{red} 0}& {\color{red} 0}&  &\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast\\
+          &  &  &  & \ast& \ast& \ast& \ast
+        \end{pmatrix}
+        \overset{{Q}_4}{\longrightarrow}
+        \begin{pmatrix}
+                   \ast& \ast& \ast& \ast&  &  &  &\\
+              & \ast& \ast& \ast& \ast  &  &  &\\
+              & & \ast& \ast& \ast& \ast &  &\\
+              & & & \ast& \ast  & \ast &  &\\
+              & & & & \ast  & \ast & {\color{red} \ast}  &{\color{red} \ast}\\
+          & & & & {\color{red} 0}& \ast & {\color{red} \ast} & {\color{red} \ast}\\
+          & & & & {\color{red} 0}& {\color{red} 0} & {\color{red} \ast} & {\color{red} \ast}\\
+          & & & & {\color{red} 0}& {\color{red} 0} & {\color{red} 0} & {\color{red} \ast}\\
+          &  && & {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  & && {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  & && {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  & && {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  & && {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  & && {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  &  &  & {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  &  &  & {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  &  &  & {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}\\
+          &  &  &  & {\color{red} 0}& {\color{red} 0}&  {\color{red} 0}& {\color{red} 0}
+        \end{pmatrix}
+      \end{aligned}
+    \end{scriptsize}
+  \end{eqnarray}
+\end{exm}
+
+可以看到，块 QR 分解利用几乎块对角矩阵$A$的稀疏性，做了一些局部的 QR 分解，最终在整体上看，
+$A$确实变成了一个上三角矩阵。故块 QR 分解是一种特殊的 QR 分解。
+
+
+注意到几乎块对角矩阵$C=(B_{j+1}(x_{i}))_{N\times n}$就是
+定义 \ref{def:FINALSplineCollocationMatrix} 中的样条配置矩阵。
+则定理 \ref{thm:FINALDLSSplinesApproximationviaQRdecomp} 中的$f$存在唯一
+当且仅当 $D^{-1}C$ （也即$C$）列满秩，由定理
+\ref{thm:FINALSWSplinesApproximation}，当且仅当
+存在$\mathbf{x}$的子列$\{x_{j_{i}}\}_{i=1}^{n}$，
+    其满足关于$\mathbf{t}$的 Schoenberg-Whitney 条件：
+    $t_{i}<x_{j_{i}}<t_{i+k},\ i=1,2,\cdots,n$。
+    
+  综上，我们得到求解 DLS 样条逼近问题的算法 \ref{alg:FINALDLSsplineApproximation}。
+  \begin{algorithm}[htb]
+  \caption{ DLS 样条逼近：$f=\textnormal{spap2}(\mathbf{t}, k, \mathbf{x}, \mathbf{y}, \mathbf{w})$}
+  \label{alg:FINALDLSsplineApproximation}
+  \begin{algorithmic}[1] 
+    \renewcommand{\algorithmicrequire}{ \textbf{Input:}} %Use Input in the format of Algorithm
+    \REQUIRE  %算法的输入参数：Input
+    定义~\ref{def:FINALDLSSplinesApproximation} 中的$\mathbf{t}, k, \mathbf{x}, \mathbf{y}, \mathbf{w}$
+    
+    \renewcommand{\algorithmicrequire}{ \textbf{Preconditions:}} %Use Input in the format of Algorithm
+    \REQUIRE  %算法的输入参数：Preconditions
+    存在$\mathbf{x}$的子列$\{x_{j_{i}}\}_{i=1}^{n}$，
+    其满足关于$\mathbf{t}$的 Schoenberg-Whitney 条件：\\
+     $t_{i}<x_{j_{i}}<t_{i+k},\quad i=1,2,\cdots,n$
+      
+    \renewcommand{\algorithmicensure}{ \textbf{Output:}} %UseOutput in the format of Algorithm
+    \ENSURE  %算法的输出：Output
+    定义~\ref{def:FINALDLSSplinesApproximation} 中的$f$
+    \renewcommand{\algorithmicensure}{ \textbf{Postconditions:}} %UseOutput in the format of Algorithm
+    % \ENSURE  %算法的输出：Postconditions
+    \FOR{$j=1 \text{ to } n$}
+    \STATE $B_{j+1}(x)\leftarrow (t_{j+k}-t_{j})\cdot [t_{j},t_{j+1},\cdots,t_{j+k}](t-x)_{+}^{k-1}$
+    \ENDFOR
+    \STATE $C\leftarrow (B_{j+1}(x_{i}))_{N\times n}$;
+    $D\leftarrow \text{diag}(w_{1}^{-\frac{1}{2}},w_{2}^{-\frac{1}{2}},\cdots, w_{N}^{-\frac{1}{2}})$
+    \STATE $A\leftarrow D^{-1}C$; $\mathbf{y}\leftarrow D^{-1}\mathbf{y}$
+    \STATE $({Q}_{1},{Q}_{2},\cdots,{Q}_{r})\leftarrow \text{BlockQR}(A)$
+    \hfill
+      // 对$A$进行块 QR 分解，得到一系列正交阵
+    \STATE $A\leftarrow {Q}_r{Q}_{r-1} \cdots {Q}_1 A$;
+    $\mathbf{y}\leftarrow {Q}_r{Q}_{r-1} \cdots {Q}_1\mathbf{y}$
+    \STATE $A\leftarrow A(1:n,:)$; $\mathbf{y}\leftarrow \mathbf{y}(1:n)$
+    \hfill
+      // 取$A$的前$n$行元素和$\mathbf{y}$的前$n$个元素
+    \STATE $\mathbf{a}\leftarrow A^{-1}\mathbf{y}$
+    \STATE $f\leftarrow a_{1}B_{2}+a_{2}B_{3}+\cdots+a_{n}B_{n+1}$
+  \end{algorithmic}
+  \end{algorithm}

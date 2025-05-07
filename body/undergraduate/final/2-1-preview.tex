@@ -1,0 +1,229 @@
+\cleardoublepage
+
+\section{预备知识}
+\label{sec:FINALbuildingknowledge}
+
+\subsection{样条函数}
+\label{subsec:FINALsplinespace}
+\begin{defn}[样条函数空间]
+  \label{def:FINALsplinespace}
+  给定非负整数$n$，$k$，以及一个严格递增序列
+  $\mathbf{x}=\{x_{i}\}_{i=1}^{N}$，称
+  \begin{equation}
+    \label{eq:FINALsplinespace}
+    \mathbb{S}_{n}^{k}(\mathbf{x})
+    =\{s\in C^{k}[a,b]:\
+    \forall i\in [1,N-1],\
+    s|_{[x_{i},x_{i+1}]}\in \mathbb{P}_{n}\}
+  \end{equation}
+  为次数为$n$（阶数为$n+1$），平滑度为$k$的样条函数空间。
+  称$\mathbf{x}$为样条的节点（knots）。
+\end{defn}
+
+最常见的样条函数的格式有两种： pp 格式（ppForm）和
+B 格式（BForm）。
+pp 样条存储一个$(N-1)$段的分段$n$次多项式，
+而 B 样条存储一组 B 样条基函数及其所对应的系数。
+一般地，我们考虑平滑度比次数少1的样条空间。下面我们
+来介绍一下这种 B 样条空间所对应的基函数。
+
+\begin{defn}[ B 样条基函数]
+  \label{def:FINALbasicBspline}
+  我们定义递增节点组$\{t_{j+i}\}_{i=0}^{k}$上的$k$阶 \textnormal{B} 样条基函数
+  $B_{j+1}(x)$为
+  \begin{equation}
+  \label{eq:FINALbasicBSpline}
+  B_{j+1}(x)=
+  (t_{j+k}-t_{j})\cdot [t_{j},t_{j+1},\cdots,t_{j+k}](t-x)_{+}^{k-1},
+  \end{equation}
+  其中
+  $[t_{j},t_{j+1},\cdots,t_{j+k}]g$为
+  $g$关于$\{t_{j+i}\}_{i=0}^{k}$的$k$阶差商（$k$th divided difference），
+  可以递归地定义为
+  \begin{equation}
+    \label{eq:FINALdividedDifference}
+    [t_{j},t_{j+1},\cdots,t_{j+k}]g
+    =\frac{[t_{j+1},t_{j+2},\cdots,t_{j+k}]g-
+      [t_{j},t_{j+1},\cdots,t_{j+k-1}]g}{t_{j+k}-t_{j}};
+  \end{equation}
+  $t_{+}^{m}$为截断幂函数（truncated power function），定义为
+  \begin{equation}
+    \label{eq:FINALtruncatedPowerFunc}
+    t_{+}^{m}=
+    \left\lbrace
+    \begin{aligned}
+      t^{m},\ t&\ge 0,\\
+      0,\ t&<0.
+    \end{aligned}
+    \right.
+  \end{equation}
+\end{defn}
+
+根据广义差商（generalized divided difference）的知识，
+$\{t_{j+i}\}_{i=0}^{k}$中是可以存在重复节点的。也就是说，在有重复节点
+且$t_{j}<t_{j+k}$的情况下，(\ref{eq:FINALbasicBSpline}) 仍是良定义的。
+
+一般地，假定$k$阶 B 样条空间
+由$B_{2},B_{3},\cdots,B_{n+1}$这$n$个 B 样条基函数张成，
+则需要用到的递增节点组为$\mathbf{t}:=\{t_{i}\}_{i=1}^{n+k}$。
+这个时候，我们一般认为
+\begin{displaymath}
+  t_{1}=t_{2}=\cdots=t_{k}<t_{k+1}<\cdots<t_{n}<
+  t_{n+1}=t_{n+2}=\cdots=t_{n+k},
+\end{displaymath}
+并视
+\begin{displaymath}
+  x_{i}=t_{i+k-1},\quad i=1,2,\cdots,n-k+2.
+\end{displaymath}
+那么，这个样条空间的节点被确定为$\{x_{i}\}_{i=1}^{n-k+2}$。
+有时，我们也不考虑节点序列的严格递增性，而简单地将 B 样条空间
+记为$\mathbb{S}_{k-1}^{k-2}(\mathbf{t})$。
+不难验证，$B_{2},B_{3},\cdots,B_{n+1}\in \mathbb{S}_{k-1}^{k-2}(\mathbf{t})$。
+
+当使用 B 样条对数据点进行插值或拟合时，样条配置矩阵
+（spline collocation matrix）的概念是非常重要的。
+\begin{defn}[样条配置矩阵]
+  \label{def:FINALSplineCollocationMatrix}
+  假设 \(\mathbf{t} = \left\{t_i\right\}_{i=1}^{n+k}\) 是一个递增节点序列，
+  并且 \(\left\{B_i\right\}_{i=2}^{n+1}\) 是对应的$k$阶 \textnormal{B} 样条序列。
+  如果给定$N\ge n$，以及
+  严格递增序列 \(\mathbf{x} = \left\{x_i\right\}_{i=1}^N\)，
+  那么对于给定的值 \(\mathbf{y} = \left\{y_i\right\}_{i=1}^N\)，
+  样条 \(f = \sum_{j=1}^n a_j B_{j+1}\) 满足
+  \(f(x_i) = y_i, i = 1,\dots,N\) 当且仅当
+  \begin{equation}
+    \label{eq:FINALSplineCollocationMatrix}
+    \sum_{j=1}^n a_j B_{j+1}(x_i) = y_i, \quad i = 1,2,\dots,N.
+  \end{equation}
+  这是一个关于未知数 \(\mathbf{a} = \left\{a_i\right\}_{i=1}^n\) 的
+  \(N\) 个方程的线性系统，其系数矩阵 \((B_{j+1}(x_i))\)$_{N\times n}$ 称为样条配置矩阵。
+\end{defn}
+
+当$N>n$时，方程组 \eqref{eq:FINALSplineCollocationMatrix} 是超定的，
+在最小二乘的意义下，其存在唯一解当且仅当其样条配置矩阵（记为$A$）是列满秩的，
+当且仅当存在$1\le j_{1}<j_{2}<\cdots<j_{n}\le N$，使得$A$的
+第$j_{1},j_{2},\cdots,j_{n}$行组成的子矩阵$\tilde{A}$是可逆的。
+
+当$N=n$时，Schoenberg-Whitney 定理指出了样条配置矩阵可逆的
+等价条件\cite{GuideToSplines}： 
+
+\begin{thm}[Schoenberg-Whitney]
+  \label{thm:FINALSchoenberg-Whitney}
+  样条配置矩阵$(B_{j+1}(x_i))_{n\times n}$是可逆的，当且仅当
+  Schoenberg-Whitney 条件成立，即数据点序列
+  $\mathbf{x}$和节点序列$\mathbf{t}$满足
+  \begin{equation}
+    \label{eq:FINALSchoenberg-Whitney}
+    t_i < x_i < t_{i+k}, \quad j = 1,\dots,n,
+  \end{equation}
+  其中在$t_{1}$和$t_{n+k}$处可以取等号。
+\end{thm}
+
+因此，我们汇总成如下定理：
+\begin{thm}
+  \label{thm:FINALSWSplinesApproximation}
+  假设 \(\mathbf{t} = \left\{t_i\right\}_{i=1}^{n+k}\) 是一个递增节点序列，
+  并且 \(\left\{B_i\right\}_{i=2}^{n+1}\) 是对应的$k$阶 \textnormal{B} 样条序列。
+  如果给定$N\ge n$，以及
+  严格递增序列 \(\mathbf{x} = \left\{x_i\right\}_{i=1}^N\)，
+  那么样条配置矩阵$(B_{j+1}(x_i))_{N\times n}$是列满秩的，当且仅当
+  Schoenberg-Whitney 条件成立，即存在$\mathbf{x}$的子序列
+  $\{x_{j_{i}}\}_{i=1}^{n}$，其和节点序列$\mathbf{t}$满足
+  \begin{equation}
+    \label{eq:FINALSWSplinesApproximation}
+    t_i < x_{j_{i}} < t_{i+k}, \quad i = 1,\dots,n,
+  \end{equation}
+  其中在$t_{1}$和$t_{n+k}$处可以取等号。
+\end{thm}
+
+
+\subsection{最佳逼近和内积空间}
+\label{sec:FINALBestApproximationAndLeastSquares}
+
+\begin{defn}[最佳逼近，best approximation]
+  \label{def:FINALBestApproximation}
+  给定一个配备范数$\|\cdot\|$的函数线性空间$Y$
+  及其子空间$X \subseteq Y$。称函数$\hat{\varphi} \in X$是
+  从$X$中得到的对$f\in Y$的最佳逼近，如果
+  \begin{equation}
+    \label{eq:FINALBestApproximation}
+    \hat{\varphi} = \arg\min_{\varphi\in X}\|f-\varphi\|,   
+  \end{equation}
+  也即
+  \begin{equation}
+    \label{eq:FINALBestApproximationEquiv}
+    \forall \varphi \in X, \quad
+    \|f - \hat{\varphi}\| \leq \|f - \varphi\|.
+  \end{equation}
+\end{defn}
+
+\begin{defn}[离散内积]
+  \label{def:FINALDiscreteInnerProduct}
+  对于有限个互不相同的数据点$x_{1},x_{2},\cdots,x_{N}$，
+  定义$\mathbb{R}$上的离散内积
+  \begin{equation}
+    \label{eq:FINALDiscreteInnerProduct}
+    \langle u(x),v(x)\rangle
+    =\sum_{i=1}^{N}w_{i}u(x_{i})v(x_{i}),
+  \end{equation}
+  其中函数$u,v:\mathbb{R}\to \mathbb{R}$，$w_{i}>0$为$x_{i}$处的权重。
+  同时定义该内积诱导的离散范数$\|\cdot\|$：
+  \begin{equation}
+    \label{eq:FINALDiscreteNorm}
+    \|u\|=\langle u,u\rangle^{\frac{1}{2}}=
+    \left(\sum_{i=1}^{N}w_{i}u(x_{i})^{2}\right)^{\frac{1}{2}}.
+  \end{equation}
+\end{defn}
+
+  为了使$\langle\cdot,\cdot\rangle$成为一个内积，
+  还需要合理定义内积空间里的元素。合适的元素是函数类，其等价关系为：
+  $u\sim \tilde{u} \Leftrightarrow
+  u(x_{i})=\tilde{u}(x_{i}),\ i=1,2,\cdots,N$。
+  当然我们也可以限制空间$X$，使此离散内积确实为一个内积，
+  离散范数确实为一个范数。
+  此情形在引理 \ref{lem:FINALSWconditionForDLSspline} 中有具体体现。
+
+\subsection{Hilbert 空间理论}
+\label{subsec:FINALHilbertspace}
+  
+  接下来，我们给出 Hilbert 空间的定义，其在
+  \ref{sec:FINAL2mSmoothingSplinesFitting} 节中发挥作用。
+
+  \begin{defn}[Hilbert 空间]
+    \label{def:FINALHilbertSpace}
+    设$H$是一内积空间，$\|\cdot\|= \langle \cdot,\cdot\rangle^{\frac{1}{2}}$
+    为内积诱导的范数。若该范数是完备的，则称$H$是 Hilbert 空间。
+  \end{defn}
+
+  由 Hilbert 空间的定义，立马得到如下推论。
+  \begin{coro}
+    \label{coro:FINALtwoHilbertSpacesProduct}
+    若$Y$, $Z$均为 Hilbert 空间，则$H:=Y\times Z$也是 Hilbert 空间。
+  \end{coro}
+  \begin{proof}
+    记$Y$和$Z$上的内积分别为$\langle\cdot,\cdot\rangle_{Y}$,
+    $\langle\cdot,\cdot\rangle_{Z}$。定义$H$上的内积为
+    \begin{displaymath}
+      \langle (f,g),(h,k)\rangle_{H}
+      :=\langle f,h\rangle_{Y}
+      +\langle g,k\rangle_{Z},
+      \quad
+      f,h\in Y,\ g,k\in Z.
+    \end{displaymath}
+    可以验证，该内积诱导出的范数也是完备的。
+  \end{proof}
+
+  \begin{thm}
+    \label{thm:FINALProjectionOp}
+    设$H$是 Hilbert 空间，$X$ 是 $H$的闭向量子空间，那么
+    对任意$x\in H$，存在唯一的$x_{0}\in X$使得
+    \begin{equation}
+      \label{eq:FINALProjectionOp}
+      \|x-x_{0}\|=d(x,X)
+      :=\inf_{y\in X}\|x-y\|.
+    \end{equation}
+    此时有$x-x_{0}\perp X$，
+    即$\forall y\in X,\ \langle x-x_{0},y\rangle=0$。
+  \end{thm}
+
+  

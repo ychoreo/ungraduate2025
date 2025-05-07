@@ -253,7 +253,7 @@ Reinsch \cite{SmoothingBySplineFunctions}对
 \cite{SmoothingBySplineFunctions,SmoothingBySplineFunctionsII}
 中有所提及，其主要思想是使用 Newton 法求解一个关于$\rho$的方程：
 \begin{equation}
-  \label{eq:rhoEqnForNewton}
+  \label{eq:rhoEqnForNewton1}
   g(\rho):= \frac{1}{E_{\rho}^{\frac{1}{2}}}
   -\frac{1}{S^{\frac{1}{2}}}=0,
 \end{equation}
@@ -288,7 +288,7 @@ $\lambda$不恒等于1时，样条函数$f$所在的空间，以及求解$f$的�
 其好处是，求解规模变大时，系数矩阵的条件数线性增长，相比于
 正规方程组而言应当有较高的求解精度。具体而言，
 我们可以仿照 B 样条插值问题所对应的方程，
-，类似地在拟合问题中能够得到一个超定方程组，其中系数矩阵为
+类似地在拟合问题中能够得到一个超定方程组，其中系数矩阵为
 %样条配置矩阵（spline collocation matrix）。该矩阵是
 几乎块对角矩阵（almost block-diagonal matrix），
 可以对其进行块 QR 分解（block QR factorization）

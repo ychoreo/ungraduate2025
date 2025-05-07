@@ -1,0 +1,631 @@
+\subsection{$2m$阶平滑样条拟合—— Bform }
+\label{sec:FINAL2mSmoothingSplinesFitting}
+
+\begin{defn}[$2m$阶平滑样条拟合]
+  \label{def:FINAL2mSmoothingSplinesFitting}
+  给定一组严格递增的数据点$\mathbf{x}=\{x_{i}\}_{i=1}^{N}$
+  和对应的误差权重$\mathbf{w}=\{w_{i}\}_{i=1}^{N}$。记
+  \begin{equation}
+    \label{eq:FINALSSFBFormSpace}
+      X_{\textnormal{BSSF}}:=\{g\in C^{m-1}([x_{1},x_{N}])\cap
+      D^{m}([x_{1},x_{N}]\setminus \{x_{i}\}_{i=2}^{N-1}):
+  \ \lambda D^{m}g\in \mathbb{S}_{m-1}^{m-2}(\mathbf{x})\},
+  \end{equation}
+  其中$\lambda(t)$为粗糙度权重
+  （见定义~\ref{def:FINALcubicSmoothingSplinesFitting}） 。
+  给定容忍度（tolerance）$S\ge 0$
+  以及一组给定的值$\mathbf{y}=\{y_{i}\}_{i=1}^{N}$，
+  称样条函数$f\in X_{\textnormal{BSSF}}$是$\{(x_{i},y_{i})\}_{i=1}^{N}$
+  在$ X_{\textnormal{BSSF}}$下误差度量不超过$S$的$2m$阶平滑样条拟合，
+  如果
+  \begin{equation}
+    \label{eq:FINAL2mSmoothingSplinesFitting}
+    f = \arg \min_{g\in  X_{\textnormal{BSSF}}\textnormal{ with } E(g)\le S} F(D^{m}g),
+  \end{equation}
+  其中$E(g),\ F(D^{m}g)$分别如
+  (\ref{eq:FINALerrorMeasure}), (\ref{eq:FINALroughnessMeasure}) 中定义。
+\end{defn}
+
+\begin{thm}
+  \label{thm:FINAL2mSmoothingSplinesFittingEquiv}
+  定义 \ref{def:FINAL2mSmoothingSplinesFitting} 中的问题与以下问题等价：
+  寻找$f\in  X_{\textnormal{BSSF}}$以及平滑参数$\rho\in \mathbb{R}$，使得$E(f)=S$且
+  \begin{equation}
+    \label{eq:FINAL2mSmoothingSplinesFittingEquiv}
+    f = \arg \min_{g\in  X_{\textnormal{BSSF}}} \left( \rho E(g)+F(D^{m}g) \right).
+  \end{equation}
+\end{thm}
+\begin{proof}
+  欲求~(\ref{eq:FINAL2mSmoothingSplinesFitting})，我们注意到有约束条件
+  $E(g)\le S$，可以引入一个辅助变量$z\in \mathbb{R}$，以及
+  一个Lagrange乘数 (或KKT乘数) $\rho\ge0$，使得我们只需考虑
+  以下最值问题:
+  \begin{displaymath}
+    \min_{g\in  X_{\textnormal{BSSF}},z\in \mathbb{R},\rho\ge 0}G(g,z,\rho),
+  \end{displaymath}
+  其中
+  \begin{displaymath}
+    G(g,z,\rho):=\rho(E(g)+z^{2}-S)+F(D^{m}g).
+  \end{displaymath}
+  并且由 Lagrange 条件，$G_{\rho}=G_{z}=0$，即
+  \begin{displaymath}
+    \begin{aligned}
+      E(g)&=S-z^{2}, \\
+      \rho z&=0.
+    \end{aligned}
+  \end{displaymath}
+  因此，若已求出$\rho$的值，那么只需寻找$f\in X_{\textnormal{BSSF}}$，使得
+  (\ref{eq:FINAL2mSmoothingSplinesFittingEquiv})成立。
+  求解$\rho$的过程比较复杂，我们在证明完$f$的存在唯一性后讲述其具体细节。
+\end{proof}
+
+将~(\ref{eq:FINALSSFBFormSpace})和
+(\ref{eq:FINALSSFppFormSpace}) 做对比知，当 $m=2$时，空间
+$X_{\textnormal{BSSF}}$和$X_{\textnormal{ppSSF}}$（在样条格式相同的意义下）是一样的；
+将~(\ref{eq:FINAL2mSmoothingSplinesFittingEquiv}) 和
+(\ref{eq:FINALcubicSmoothingSpline}) 做对比知，二者所要解决的问题的形式也类似
+（令后者的$p=\rho/(\rho+1)$）。
+然而，由于样条格式不同，且 B 样条要求阶数为任意偶数，所以在这一节解决问题
+的方法，会和 \ref{sec:FINALcubicSmoothingSplineFitting} 节截然不同。
+在证明之前，我们也给出一个类似于引理 \ref{lem:FINALminimumBendingEnergy}
+的一个引理，用于验证目标函数$f$具有自然边界性质，即
+\begin{equation}
+  \label{eq:FINALnaturalOrder2m}
+  \forall j=m,\cdots,2m-2,\quad
+    D^{j}f(x_{1})=D^{j}f(x_{N})=0.
+  \end{equation}
+
+\begin{lem}
+  \label{lem:FINALminimumBendingEnergyForBSpline}
+  对于任意
+  满足条件$g(x_{i})=y_{i},\ i=1,\cdots,N$的$g\in C^{m-1}([x_{1},x_{N}])\cap
+      D^{m}([x_{1},x_{N}]\setminus \{x_{i}\}_{i=2}^{N-1})$，
+  通过对数据点
+  $\{(x_{i},y_{i})\}_{i=1}^{N}$插值得到的自然样条$f\in X_{\textnormal{BSSF}}$
+  满足
+  \begin{equation}
+    \label{eq:FINALminimumBendingEnergyForBSpline}
+    F(D^{m}f)\le F(D^{m}g),
+  \end{equation}
+  其中$F(D^{m}f),\ F(D^{m}g)$如~(\ref{eq:FINALroughnessMeasure})中定义。
+  上式等号成立当且仅当$g=f$。
+\end{lem}
+\begin{proof}
+  与引理 \ref{lem:FINALminimumBendingEnergy} 中的证明类似，只需
+  设$\eta(x)=g(x)-f(x)$，并对
+  $\int_{x_{1}}^{x_{N}}\lambda(t) D^{m}f(t) D^{m}\eta(t) \mathrm{d}t$做 $m$ 次分部积分，
+  利用$f$的自然边界性质，$\eta$在$x_{i}$处为0，以及$D^{2m}f\equiv 0$，
+  可以证明此积分式为0。
+\end{proof}
+
+现在，我们开始此问题的证明。
+
+\begin{thm}
+  \label{thm:FINAL2mSmoothingSplinesFitting}
+  假设已知$\rho$的值，则
+  存在唯一满足 (\ref{eq:FINAL2mSmoothingSplinesFittingEquiv})的$f\in  X_{\textnormal{BSSF}}$，
+  且其满足自然边界条件 (\ref{eq:FINALnaturalOrder2m})。
+\end{thm}
+\begin{proof}
+  假设存在$f\in X_{\textnormal{BSSF}}$为满足问题的解。我们对
+  数据点$\{(x_{i},f(x_{i}))\}_{i=1}^{N}$在空间$X_{\textnormal{BSSF}}$下进行
+  $2m$阶自然样条插值，得到样条$s(f;\mathbf{x})$。则$E(f)=E(s)$，
+  且由引理~\ref{lem:FINALminimumBendingEnergyForBSpline}，
+  $F(D^{m}s)\le F(D^{m}f)$，等号成立当且仅当$f=s$，即$f$为自然样条。
+  由于我们需要保证$f$最小化$\rho E(f)+F(D^{m}f)$，因此
+  只能$f=s$。故$f$唯一，且是自然样条。
+
+  接下来证$f$的存在性。
+  由于$f$的求解与$\rho$有关，为方便说明，我们记问题的解为$f_{\rho}$，
+  而后续提及的$f$可能是$ X_{\textnormal{BSSF}}$或其他空间的任意函数。
+  同时，记$a:=x_{1},\ b:=x_{N},\ X:=X_{\textnormal{BSSF}}$。
+  我们利用内积空间最佳逼近理论来
+  寻找~(\ref{eq:FINAL2mSmoothingSplinesFittingEquiv})中的$f_{\rho}$。
+  \cite{Boor2001CALCULATIONOT}
+
+  定义线性映射
+\begin{align*}
+  \alpha:X\to Y&:=\mathbb{R}^{N}:\quad
+                 f\mapsto f|_{\mathbf{x}}:=
+                 [f(x_{1}),\cdots,f(x_{N})]^{T},\\
+  \beta:X\to Z&:=L_{2}[a,b]:\quad
+                f\mapsto D^{m}f,
+\end{align*}
+由于$Y$和$Z$均为 Hilbert 空间，由
+推论 \ref{coro:FINALtwoHilbertSpacesProduct} 知，
+$H:=Y\times Z$为 Hilbert 空间，且我们定义
+$H$上的内积为
+\begin{displaymath}
+  \langle (\mathbf{f},g),(\mathbf{h},k)\rangle
+  :=\rho\langle \mathbf{f},\mathbf{h}\rangle_{Y}
+  +\langle g,k\rangle_{Z},
+\end{displaymath}
+其中
+\begin{align*}
+  \langle \mathbf{f},\mathbf{h}\rangle_{Y}
+  &:=\sum_{j=1}^{N}w_{j}f_{j}h_{j},
+    \quad \mathbf{f},\mathbf{h}\in Y,\\
+  \langle g,k\rangle_{Z}&:=\int_{a}^{b}\lambda(t) g(t)k(t)\mathrm{d}t,
+                          \quad g,k\in Z.
+\end{align*}
+注意到
+\begin{align*}
+  \rho E(f_{\rho})+F(D^{m}f_{\rho})
+  &=\rho\sum_{j=1}^{N}w_{j}(y_{j}-f_{\rho}(x_{j}))^{2}
+    +\int_{a}^{b}\lambda(t)|D^{m}f_{\rho}(t)|^{2}\mathrm{d}t\\
+  &=\rho\|\mathbf{y}-\alpha(f_{\rho})\|_{Y}^{2}
+    +\|\beta(f_{\rho})\|_{Z}^{2}\\
+  &=\|(\mathbf{y},0)-(\alpha(f_{\rho}),\beta(f_{\rho}))\|^{2},
+\end{align*}
+为了使用定理 \ref{thm:FINALProjectionOp}，
+我们需要证明以下两个命题：
+\begin{itemize}
+\item $ X\to H:\ f\mapsto \left(\alpha(f),\beta(f)\right)$ 是一个嵌入
+  （从而可以将 $X$视为$H$的向量子空间）；
+  \item $X$是闭的（从而可以将$X$视为$H$的闭向量子空间）。
+\end{itemize}
+对于第一个命题，其充要条件是
+\begin{displaymath}
+  \ker\alpha \cap \ker \beta=\{0\},
+\end{displaymath}
+并且由于
+\begin{displaymath}
+  \ker\alpha =\{f\in X:\ f|_{\mathbf{x}}=0\},\quad
+  \ker \beta=\mathbb{P}_{m-1},
+\end{displaymath}
+故第一个命题成立当且仅当$N\ge m$。
+在一般情形下，数据点的个数$N$会很大，故在今后假设$N\ge m$。
+对于第二个命题，我们考虑$f\in X$在$a$处的带积分余项的$m$阶 Taylor 展开：
+\begin{equation}
+  \label{eq:FINALstandardRepresentationX}
+  f=T_{a,m}f+R\beta(f),
+\end{equation}
+其中$T_{a,m}f$是$f$在$a$处的$m$阶 Taylor 多项式，且
+\begin{displaymath}
+  R:Z\to X:\
+  g\mapsto \frac{1}{(m-1)!}
+  \int_{a}^{b}(\cdot -s)^{m-1}_{+}g(s)\mathrm{d}s.
+\end{displaymath}
+从而$X=\mathbb{P}_{m-1}+R(Z)$为两个闭子空间的和，仍然是闭的。
+
+因此$f_{\rho}$是从$X\subset H$到元素
+$(\mathbf{y},0)\in H$的唯一最佳逼近，且
+$(\mathbf{y},0)-(\alpha(f_{\rho}),\beta(f_{\rho}))$垂直于$X$，即
+\begin{equation}
+  \label{eq:FINALerrorPerpX}
+  \forall f\in X,\quad
+  \rho \langle \mathbf{y}-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}
+  -\langle \beta(f_{\rho}),\beta(f) \rangle_{Z}=0.
+\end{equation}
+由于$\ker\beta=\mathbb{P}_{m-1}$，~(\ref{eq:FINALerrorPerpX}) 意味着
+\begin{equation}
+  \label{eq:FINALerrorPerpPolym}
+  \forall f\in \mathbb{P}_{m-1},\quad
+  \langle \mathbf{y}-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}=0.
+\end{equation}
+以及，结合~(\ref{eq:FINALstandardRepresentationX})和上式，
+(\ref{eq:FINALerrorPerpX}) 意味着
+\begin{equation}
+  \label{eq:FINALerrorPerpZ}
+  \forall g\in Z,\quad
+  \rho\langle \mathbf{y}-\alpha(f_{\rho}),\alpha(Rg) \rangle_{Y}
+  =\langle \beta(f_{\rho}),g \rangle_{Z}.
+\end{equation}
+反之，~(\ref{eq:FINALerrorPerpPolym}) 和~(\ref{eq:FINALerrorPerpZ})
+ 意味着~(\ref{eq:FINALerrorPerpX})。
+
+由于~(\ref{eq:FINALerrorPerpZ}) 的左边作为$g$的函数是一个连续线性泛函，
+故它可以表示为$\langle z,g \rangle_{Z}$，其中$z\in Z$。
+具体地，
+\begin{align*}
+    \langle \mathbf{y}-\alpha(f_{\rho}),\alpha(Rg) \rangle_{Y}
+  &=  \sum_{j=1}^{N}w_{j}(y_{j}-f_{\rho}(x_{j}))
+    \frac{1}{(m-1)!}\int_{a}^{b}(x_{j}-s)_{+}^{m-1}g(s)\mathrm{d}s\\
+  &=  \int_{a}^{b}\frac{1}{(m-1)!}
+      \sum_{j=1}^{N}w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-s)_{+}^{m-1}
+    g(s)\mathrm{d}s\\
+  &=  \left\langle \frac{1}{\lambda (m-1)!}
+    \sum_{j=1}^{N}w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-\cdot)_{+}^{m-1},g\right\rangle_{Z}.
+\end{align*}
+因此，~(\ref{eq:FINALerrorPerpZ}) 等价于
+\begin{equation}
+  \label{eq:FINALmthderfrho}
+  \frac{\rho}{(m-1)!}\sum_{j=1}^{N}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-\cdot)_{+}^{m-1}
+  =\lambda D^{m}f_{\rho}.
+\end{equation}
+这表明$\lambda D^{m}f_{\rho}$是阶数为$m$的分段多项式，
+其节点序列为$\mathbf{x}$，
+这也说明了$f_{\rho}$为何是属于$X$的。
+此外，不难发现$\lambda D^{m}f_{\rho}$在$x_{N}$及其右侧为0。
+
+从另一角度看，由~(\ref{eq:FINALerrorPerpPolym})，
+\begin{displaymath}
+  \frac{\rho}{(m-1)!}\sum_{j=1}^{N}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(x_{j}-\cdot)^{m-1}=0,
+\end{displaymath}
+因此，结合$(x_{j}-t)_{+}^{m-1}
+=(x_{j}-t)^{m-1}-(-1)^{m-1}(t-x_{j})_{+}^{m-1}$，也有
+\begin{equation}
+  \label{eq:FINALmthderfrhoEquiv}
+  \frac{\rho (-1)^{m}}{(m-1)!}\sum_{j=1}^{N}
+  w_{j}(y_{j}-f_{\rho}(x_{j}))(\cdot-x_{j})_{+}^{m-1}
+  =\lambda D^{m}f_{\rho},
+\end{equation}
+表明$\lambda D^{m}f_{\rho}$也在$x_{1}$及其左侧为0。
+
+另外，由于$f_{\rho}$为自然样条，我们还有
+\begin{displaymath}
+  \forall j=0,1,\cdots,m-2,\quad
+  D^{j}(\lambda D^{m}f_{\rho})(x_{1})=
+  D^{j}(\lambda D^{m}f_{\rho})(x_{N})=0,
+\end{displaymath}
+这导致了$\lambda D^{m}f_{\rho}$的生成元
+不会有那些通过重复节点定义的$m$阶 B 样条基函数。
+具体地，对于$0<k<m$和节点组
+$t_{0}=t_{1}=\cdots=t_{k}<t_{k+1}<\cdots<t_{m}$，
+成立$D^{m-k-1}B_{1}(t_{0})\neq 0$.
+
+因此，$\lambda D^{m}f_{\rho}$仅需在
+$\{B_{2},\cdots,B_{N-m+1}\}$所张成的空间里，其中
+$B_{j+1}$为对应于节点$\{x_{k}\}_{k=j}^{j+m}$的
+B 样条基函数，
+\begin{equation}
+  \label{eq:FINALmthderfrhoLinearComp}
+  \begin{aligned}
+    B_{k+1}(t)
+    =(x_{k+m}-x_{k})[x_{k},\cdots,x_{k+m}](\cdot - t)_{+}^{m-1}
+    =:\sum_{j=k}^{k+m}(x_{j}-t)_{+}^{m-1}c_{j,k},
+  \end{aligned}
+\end{equation}
+其中，由差商性质，
+\begin{displaymath}
+  c_{j,k}=
+    \begin{cases}
+      \frac{x_{k+m}-x_k}{\prod\{ (x_{j}-x_{i}):i\in\{k,\cdots,k+m\}
+      \backslash\{j\} \}}, \quad &j=k,\cdots,k+m;\\
+      0,\quad&\text{其他}.
+    \end{cases}
+\end{displaymath}
+  
+令$\mathbf{c}=[c_{1},\cdots,c_{N-m}]^{T}\in \mathbb{R}^{N-m}$，待定系数
+\begin{equation}
+  \label{eq:FINALlambdaOrdermfrhoAsBsplineSpan}
+  \lambda D^{m}f_{\rho}=\sum_{k=1}^{N-m}c_{k}B_{k+1}.
+\end{equation}
+将~(\ref{eq:FINALmthderfrhoLinearComp})
+代入~(\ref{eq:FINALlambdaOrdermfrhoAsBsplineSpan})，
+并与~(\ref{eq:FINALmthderfrho}) 中$(x_{j}-t)_{+}^{m-1}$的系数做对比，得到
+\begin{equation}
+  \label{eq:FINALrelationOfCc}
+  \rho W(\mathbf{y}-\alpha(f_{\rho}))=C\mathbf{c},
+\end{equation}
+其中
+\begin{displaymath}
+  W:=\text{diag}(\mathbf{w}),\quad
+  C:=(m-1)!(c_{j,k})_{1\le j\le N,1\le k\le N-m}.
+\end{displaymath}
+
+现在我们证明~(\ref{eq:FINALrelationOfCc}) 与~(\ref{eq:FINALerrorPerpX}) 等价。
+一方面，
+由于~(\ref{eq:FINALrelationOfCc}) 与~(\ref{eq:FINALmthderfrhoLinearComp})
+推出~(\ref{eq:FINALmthderfrho})，从而推出~(\ref{eq:FINALerrorPerpZ})。
+另一方面，注意到，对任意$f\in X$，
+\begin{equation}
+  \label{eq:FINALPeanoKernelForDividedDifference}
+  \begin{aligned}
+     (C^{T}\alpha(f))_{j}
+    &= (m-1)!\sum_{k=j}^{j+m}c_{k,j}f(x_{k})\\
+    &= (m-1)!(x_{j+m}-x_{j})
+       \frac{f(x_{k})}{\prod_{i=j;i\neq k}^{j+m}(x_{k}-x_{i})}\\
+   &= (m-1)!(x_{j+m}-x_{j})\cdot [x_{j},\cdots,x_{j+m}]f\\
+    &= (x_{j+m}-x_{j})\cdot [x_{j},\cdots,x_{j+m}]
+      \int_{a}^{b}(t-s)_{+}^{m-1}D^{m}f(s)\mathrm{d}s\\
+    &= \int_{a}^{b}(x_{j+m}-x_{j})[x_{j},\cdots,x_{j+m}](t-s)_{+}^{m-1}
+      \cdot D^{m}f(s)\mathrm{d}s\\
+    &= \int_{a}^{b}B_{j+1}(s)D^{m}f(s)\mathrm{d}s,
+  \end{aligned}
+\end{equation}
+其中
+第四步来自~(\ref{eq:FINALstandardRepresentationX})，
+最后一步来自~(\ref{eq:FINALmthderfrhoLinearComp})。
+因此，
+\begin{align*}
+  \forall f\in X,\quad
+  \langle \mathbf{y}-\alpha(f_{\rho}),\alpha(f) \rangle_{Y}
+  &=\alpha(f)^{T}W(\mathbf{y}-\alpha(f_{\rho}))\\
+  &=\alpha(f)^{T}C \frac{\mathbf{c}}{\rho}
+  =(C^{T}\alpha(f))^{T}\frac{\mathbf{c}}{\rho},
+\end{align*}
+而由~(\ref{eq:FINALPeanoKernelForDividedDifference})，
+对$f\in \mathbb{P}_{m-1}$有$C^{T}\alpha(f)=0$。
+从而~(\ref{eq:FINALrelationOfCc}) 意味着~(\ref{eq:FINALerrorPerpPolym})。
+这表明，
+(\ref{eq:FINALrelationOfCc}) 能推出
+~(\ref{eq:FINALerrorPerpPolym}) 和~(\ref{eq:FINALerrorPerpZ})，
+从而推出~(\ref{eq:FINALerrorPerpX})。
+现在，我们仅需关注~(\ref{eq:FINALrelationOfCc})。
+
+为此，从~(\ref{eq:FINALPeanoKernelForDividedDifference}) 与
+(\ref{eq:FINALlambdaOrdermfrhoAsBsplineSpan}) 得，
+\begin{equation}
+  \label{eq:FINALrelationOfCtc}
+  C^{T}\alpha(f_{\rho})=A\mathbf{c},
+\end{equation}
+其中
+\begin{displaymath}
+  A:= \left( \int_{a}^{b}\frac{1}{\lambda(t)}B_{j+1}(t)B_{k+1}(t)
+    \mathrm{d}t
+  \right)_{1\le j,k \le N-m}.
+\end{displaymath}
+将~(\ref{eq:FINALrelationOfCc}) 以
+\begin{equation}
+  \label{eq:FINALfrhoValueFromc}
+  \alpha(f_{\rho})=\mathbf{y}
+  -W^{-1}C\cdot \frac{\mathbf{c}}{\rho}
+\end{equation}
+的形式代入~(\ref{eq:FINALrelationOfCtc})，得到以下矩阵方程：
+\begin{equation}
+  \label{eq:FINALlineareqnOfc}
+  C^{T}\mathbf{y}=(C^{T}W^{-1}C+\rho A)\mathbf{u},
+\end{equation}
+其中$\mathbf{u}:=\mathbf{c}/\rho$。
+由于该方程的系数矩阵是对称正定的，因此$\mathbf{u}$存在唯一。
+并且，由 (\ref{eq:FINALfrhoValueFromc}) 能够求出$\alpha(f_{\rho})$。
+为了得到$f_{\rho}$，将得到的结果
+$D^{m}f_{\rho}=(1/\lambda)\sum_{j=1}^{N-m}c_{j}B_{j+1}$积分$m$次，
+得到$f:=D^{-m}(D^{m}f_{\rho})$，它与$f_{\rho}$仅相差某个
+$q\in \mathbb{P}_{m-1}$。
+可以确定这个$q$为唯一的$q\in \mathbb{P}_{m-1}$，使得
+$\alpha(q+f)=\alpha(f_{\rho})$，即
+$\alpha(q)=\alpha(f_{\rho})-\alpha(f)$。
+\end{proof}
+
+  求解方程 (\ref{eq:FINALlineareqnOfc}) 时，当$m$越来越大时，
+  $C$和$A$的装配会极其困难。我们仅实现$m=1,2,3$的情形。
+  为方便起见，我们把$A$和$C$的元素列于下方。
+  \begin{align*}
+    A_{j,k}&= \int_{a}^{b}\frac{1}{\lambda(t)}B_{j+1}(t)B_{k+1}(t)\mathrm{d}t,\quad
+             1\le j,k\le N-m,\\
+    C_{j,k}&=
+    \begin{cases}
+      \frac{(m-1)!(x_{k+m}-x_k)}{\prod\{ (x_{j}-x_{i}):i\in\{k,\cdots,k+m\}
+      \backslash\{j\} \}}, \quad &j=k,\cdots,k+m;\\
+      0,\quad&\text{其他},
+    \end{cases}\quad
+     1\le j\le N,\ 1\le k\le N-m.
+  \end{align*}
+  下面令$h_{i}:=x_{i+1}-x_{i}$，$\tilde{h}_{i}:=h_{i}/\lambda_{i}$。
+  
+  当$m=1$时，$B_{j+1}=\chi_{[x_{j},x_{j+1})}$，从而
+  \begin{displaymath}
+    \int_{x_{j}}^{x_{j+1}}B_{j+1}(t)B_{k+1}(t)\mathrm{d}t=\delta_{j,k}h_{j}.
+  \end{displaymath}
+ % 其中$\delta_{j,j}=1,\ \delta_{j,k}=0,\ \forall j\neq k$。
+  故$A$是对角矩阵，其对角元为
+  $\tilde{h}_{j},\ j=1,\cdots,N-1$。
+  此外，直接计算得：$C_{k,k}=-1,C_{k+1,k}=1,\ \forall k$，
+  其他$C$中的元素均为0。
+
+  当$m=2$时，$B_{j+1}$是分片线性函数，在$x_{j}$上取值为1，
+  在$x_{i},\ i\neq j$时取值为0。
+  令$t=x_{j}+sh_{j}$，则
+  \begin{displaymath}
+    \int_{x_{j}}^{x_{j+1}}B_{j}(t)^{2}\mathrm{d}t
+    =h_{j}\int_{0}^{1}s^{2}\mathrm{d}s=\frac{h_{j}}{3},
+  \end{displaymath}
+  而
+  \begin{displaymath}
+    \begin{aligned}
+      \int_{x_{j}}^{x_{j+1}}B_{j-1}(t)B_{j}(t)\mathrm{d}t
+      &=\int_{x_{j}}^{x_{j+1}}B_{j}(t)\mathrm{d}t
+      -\int_{x_{j}}^{x_{j+1}}B_{j}(t)^{2}\mathrm{d}t\\
+      &=\frac{h_{j}}{2}-\frac{h_{j}}{3}
+      =\frac{h_{j}}{6}.
+    \end{aligned} 
+  \end{displaymath}
+  因此，$A$是三对角矩阵，其一般行形式为
+  \begin{displaymath}
+    \frac{1}{6}
+    \left(\tilde{h}_{j},
+      2\left(\tilde{h}_{j}+\tilde{h}_{j+1}\right),\tilde{h}_{j+1}
+    \right),
+  % \left( \frac{h_{j}}{\lambda_{j}},
+  %   2 \left( \frac{h_{j}}{\lambda_{j}}+
+  %     \frac{h_{j+1}}{\lambda_{j+1}}\right),
+  %   \frac{h_{j+1}}{\lambda_{j+1}}
+  % \right),
+  \qquad j=1,\cdots, N-2.
+  \end{displaymath}
+  此外，直接计算得：
+  \begin{align*}
+    \forall k,\qquad
+    C_{k,k}=\frac{1}{h_{k}},\quad
+    C_{k+1,k}=-\frac{1}{h_{k}}-\frac{1}{h_{k+1}},\quad
+    C_{k+2,k}=\frac{1}{h_{k+1}},\quad
+  \end{align*}
+  其他$C$中的元素均为$0$。
+
+  当$m=3$时，直接计算得：
+  \begin{align*}
+    \forall k,\qquad
+    C_{k,k}
+    =-\frac{2}{h_{k}(h_{k}+h_{k+1})},&\quad
+    C_{k+1,k}
+    =\frac{2(h_{k}+h_{k+1}+h_{k+2})}{h_{k}h_{k+1}(h_{k+1}+h_{k+2})},\\
+    C_{k+2,k}
+    =-\frac{2(h_{k}+h_{k+1}+h_{k+2})}{(h_{k}+h_{k+1})h_{k+1}h_{k+2}},&\quad
+    C_{k+3,k}=\frac{2}{(h_{k+1}+h_{k+2})h_{k+2}},
+  \end{align*}
+  其他$C$中的元素均为$0$。接下来计算$A$。
+  直接计算显然不是好方法，因为$B_{j}$在每段区间上是$\mathbb{P}_{2}$的，
+  这需要计算5个4次多项式的积分。
+  我们采用三点 Gauss-Legendre 数值积分，它有5阶代数精度：
+  \begin{displaymath}
+    \int_{x_{i}}^{x_{i+1}}g(t)\mathrm{d}t
+    =h_{i}\left(
+    \frac{5}{18}g\left( l_{i} \right)
+    +\frac{4}{9}g(m_{i})
+    +\frac{5}{18}g\left( r_{i} \right)
+    \right),
+  \end{displaymath}
+  其中
+  \begin{align*}
+    m_{i}=\frac{(x_{i}+x_{i+1})}{2},\quad
+    l_{i}=m_{i}-\sqrt{\frac{3}{5}}\frac{h_{i}}{2},\quad
+    r_{i}=m_{i}+\sqrt{\frac{3}{5}}\frac{h_{i}}{2}.
+  \end{align*}
+  因此
+  \begin{align*}
+    A_{j,k}
+    &=\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}\frac{1}{\lambda(t)}B_{j+1}(t)B_{k+1}(t)\\
+    &=\sum_{i=1}^{N-1}\tilde{h}_{i}\left(
+    \frac{5}{18}B_{j+1}(l_{i})B_{k+1}(l_{i})
+   +\frac{4}{9}B_{j+1}(m_{i})B_{k+1}(m_{i})
+     +\frac{5}{18}B_{j+1}(r_{i})B_{k+1}(r_{i})
+    \right).
+  \end{align*}
+  具体地，
+  结合$B_{k+1}$仅在$(x_{k},x_{k+3})$上不为0，得：对$\forall k$，
+  \begin{align*}
+    &\ A_{k,k}
+    =\sum_{i=k}^{k+2}\tilde{h}_{i}\left(
+      \frac{5}{18}B_{k+1}^{2}(l_{i}) 
+      +\frac{4}{9}B_{k+1}^{2}(m_{i})
+      +\frac{5}{18}B_{k+1}^{2}(r_{i})
+      \right),\\
+    &\ A_{k-1,k}
+    =\sum_{i=k}^{k+1}\tilde{h}_{i}\left(
+    \frac{5}{18}B_{k}(l_{i})B_{k+1}(l_{i})
+     +\frac{4}{9}B_{k}(m_{i})B_{k+1}(m_{i})
+     +\frac{5}{18}B_{k}(r_{i})B_{k+1}(r_{i})\right),\\
+    &\
+    A_{k-2,k}
+    =\tilde{h}_{k}\left(
+    \frac{5}{18}B_{k-1}(l_{k})B_{k+1}(l_{k}) 
+    +\frac{4}{9}B_{k}(m_{k})B_{k+1}(m_{k})
+    +\frac{5}{18}B_{k}(r_{k})B_{k+1}(r_{k})
+    \right),
+  \end{align*}
+  其他$A$中的元素均为0。在这些表达式中，
+  诸如$B_{k}(m_{i})$之类的计算在配置矩阵的计算中有体现，可以直接计算。
+
+  接下来，我们来讲述计算$\rho$的方法。
+  记$E_{\rho}:=\|\mathbf{y}-\alpha(f_{\rho})\|_{Y}^{2}$。则$\rho$满足
+  以下方程：
+  \begin{equation}
+    \label{eq:FINALrhoEqn}
+    g(\rho):=
+    \frac{1}{E_{\rho}^{\frac{1}{2}}}
+    -\frac{1}{S^{\frac{1}{2}}}=0.
+  \end{equation}
+  选取该方程进行迭代求解，可以使求解效率更高，更快收敛，
+  具体细节可见\cite{Boor2001CALCULATIONOT,SmoothingBySplineFunctions}。
+  由~(\ref{eq:FINALfrhoValueFromc})得
+\begin{displaymath}
+  E_{\rho}=\mathbf{u}^{T}C^{T}W^{-1}C\mathbf{u}.
+\end{displaymath}
+记求导算子$D:=\mathrm{d}/\mathrm{d}\rho$，则
+$DE_{\rho}=2\mathbf{u}^{T}C^{T}W^{-1}CD\mathbf{u}$。
+将$D$作用于~(\ref{eq:FINALlineareqnOfc})并整理，可知
+$D\mathbf{u}$通过线性系统
+\begin{displaymath}
+  -A\mathbf{u}=(C^{T}W^{-1}C+\rho A)D\mathbf{u}
+\end{displaymath}
+唯一确定。
+特别地，对$\rho=0$，这表示$DE_{\rho}=-2\mathbf{u}^{T}A\mathbf{u}$，
+其中$\mathbf{u}=(C^{T}W^{-1}C)^{-1}C^{T}\mathbf{y}$，
+这为在初始步骤$\rho_{0}=0$处对~(\ref{eq:FINALrhoEqn})
+应用牛顿法提供了所需的斜率：
+\begin{displaymath}
+  g'(0)=-\frac{1}{2}E_{0}^{-\frac{3}{2}}DE_{0}
+  =E_{0}^{-\frac{3}{2}}\mathbf{u}^{T}A\mathbf{u}.
+\end{displaymath}
+其迭代格式为：
+\begin{displaymath}
+%  \label{eq:rhoNewtonIter}
+  \rho_{1}=\rho_{0}-\frac{g(\rho_{0})}{g'(\rho_{0})}
+  =-\frac{g(0)E_{0}^{\frac{3}{2}}}{\mathbf{u}^{T}A\mathbf{u}}.
+\end{displaymath}
+对于后续步骤，为避免计算$DE_{\rho}$
+（这需要解一个线性系统），我们使用割线法。其迭代格式为：
+\begin{align*}
+  % \label{eq:rhoSecantIter}
+  \forall n\ge 1, \quad
+  \rho_{n+1}
+    =\rho_{n}
+      -g(\rho_{n})\frac{\rho_{n}-\rho_{n-1}}{g(\rho_{n})-g(\rho_{n-1})}
+    =\rho_{n}
+     +\frac{\rho_{n}-\rho_{n-1}}{\frac{g(\rho_{n-1})}{g(\rho_{n})}-1}.
+\end{align*}
+总结$\rho_{n}$的迭代格式为：
+\begin{equation}
+  \label{eq:FINALrhoIter}
+  \begin{aligned}
+    \rho_{0}=0,\quad
+    \rho_{1}
+      =-\frac{g(0)E_{0}^{\frac{3}{2}}}{\mathbf{u}^{T}A\mathbf{u}},\quad
+    \rho_{n+1}
+    =\rho_{n}+\frac{\rho_{n}-\rho_{n-1}}{\frac{g(\rho_{n-1})}{g(\rho_{n})}-1},
+      \quad n\ge 1.
+  \end{aligned}
+\end{equation}
+迭代的终止条件设定为相对误差1\%以内，即
+\begin{equation}
+  \label{eq:FINALrhoIterEnd}
+  100|E_{\rho_{n}}-S|<S.
+\end{equation}
+
+综上，我们给出解决$2m$阶平滑样条拟合的算法 \ref{alg:FINALBSSF}。
+\begin{algorithm}[htb]
+\caption{$2m$阶平滑样条拟合：$f=\textnormal{spaps}(\mathbf{x}, \mathbf{y}, \mathbf{w}, \lambda, m,S)$}
+\label{alg:FINALBSSF}
+\begin{algorithmic}[1] 
+  \renewcommand{\algorithmicrequire}{ \textbf{Input:}} %Use Input in the format of Algorithm
+  \REQUIRE  %算法的输入参数：Input
+  定义~\ref{def:FINAL2mSmoothingSplinesFitting} 中的$\mathbf{x}, \mathbf{y}, \mathbf{w}, \lambda, m,S$
+    
+      \renewcommand{\algorithmicrequire}{ \textbf{Preconditions:}} %Use Input in the format of Algorithm
+  %\REQUIRE  %算法的输入参数：Preconditions
+      
+    \renewcommand{\algorithmicensure}{ \textbf{Output:}} %UseOutput in the format of Algorithm
+  \ENSURE  %算法的输出：Output
+  定理 \ref{thm:FINAL2mSmoothingSplinesFittingEquiv} 中的$f$和$\rho$
+\renewcommand{\algorithmicensure}{ \textbf{Postconditions:}} %UseOutput in the format of Algorithm
+\ENSURE  %算法的输出：Postconditions
+    $f$为 B 格式，满足自然边界条件
+    \STATE $A\leftarrow (\int_{a}^{b}\frac{1}{\lambda(t)}B_{j+1}(t)B_{k+1}(t)\mathrm{d}t)_{1\le j,k\le N-m}$;  
+             $C\leftarrow (m-1)!(c_{j,k})_{1\le j\le N,1\le k\le N-m}$;
+             $W\leftarrow \text{diag}(\mathbf{w})$
+    \STATE $\mathbf{u}\leftarrow(C^{T}W^{-1}C)^{-1}C^{T}\mathbf{y}$
+    \STATE $E\leftarrow \mathbf{u}^{T}C^{T}W^{-1}C\mathbf{u}$;
+     $g_{0}\leftarrow E^{-\frac{1}{2}}-S^{-\frac{1}{2}}$;
+     $\rho\leftarrow -g_{0}E^{\frac{3}{2}}/\mathbf{u}^{T}A\mathbf{u}$; $\Delta \rho\leftarrow\rho$
+     \hfill // $\rho$的第一步迭代
+    \WHILE{$\Delta\rho > 0$}
+    \STATE $\mathbf{u}\leftarrow(C^{T}W^{-1}C+\rho A)^{-1}C^{T}\mathbf{y}$
+    \STATE $E\leftarrow \mathbf{u}^{T}C^{T}W^{-1}C\mathbf{u}$
+    \IF{$100|E-S| < S$}
+        \STATE \textbf{break}
+    \ENDIF
+    \STATE $g_{\rho}\leftarrow {E}^{-\frac{1}{2}} - S^{-\frac{1}{2}}$;
+     $\Delta\rho\leftarrow \Delta\rho / (g_{0}/g_{\rho} - 1)$;
+     $g_{0} \leftarrow g_{\rho}$;
+     $\rho \leftarrow\rho + \Delta\rho$
+     \ENDWHILE
+     \STATE $\alpha(f_{\rho})\leftarrow \mathbf{y}-W^{-1}C\mathbf{u}$
+     \STATE $\mathbf{c}\leftarrow \rho \mathbf{u}$;
+     $f\leftarrow D^{-m}((1/\lambda)\Sigma_{i=1}^{N-m}c_{j}B_{j+1})$
+     \STATE $\alpha(q)\leftarrow \alpha(f_{\rho})-\alpha(f)$
+     \STATE $q\leftarrow \text{PolyFitter}(\mathbf{x},\alpha(q))$
+     \hfill // 函数PolyFitter返回拟合$N$个点所得的$m$阶多项式$q$
+     \STATE $f\leftarrow f+q$
+\end{algorithmic}
+\end{algorithm}
+
+在后续的数值测试（见第 \ref{sec:FINALTest} 节 ）中，
+我们发现所求出的 B 样条的基函数对应系数的精度下降地很快。
+实际上，当区间$[a,b]$固定时，随着$N$的增大，步长$h_{i}$不断地减小，
+而当$m=2$时，
+矩阵$C$中的元素均为$O(h^{-1})=O(N)$的，这导致方程系数矩阵
+$C^{T}W^{-1}C+\rho A$的条件数平方增长，求解不稳定。

@@ -1,0 +1,20 @@
+\cleardoublepage
+\section{结论与展望}
+\label{sec:FINALconclusion}
+
+本文从样条拟合的观点出发，对给定的数据点
+$\{(x_{i},y_{i})\}_{i=1}^{N}$进行不同形式的样条拟合。
+
+在离散最小二乘 B 样条逼近的问题中，
+编写解决几乎块对角矩阵的块 QR 分解的 C++ 代码，
+并将其用于 spap2 函数的 C++ 实现，
+在 Baltamatica 上进行精度测试，与 Matlab 的结果符合的很好
+（见表 \ref{tab:FINALspap2sinxacc} 和 \ref{tab:FINALspap2Rungeacc}）。
+
+在三次平滑 pp 样条拟合问题中，通过解决正规方程
+\ref{eq:FINALMatrixEquationForppSSF}（对系数矩阵使用$LDL^{T}$分解），
+我们得到 csaps 函数的 C++ 实现，
+在 Baltamatica 上进行精度测试，与 Matlab 的结果符合预期
+（见表 \ref{tab:FINALcsapssinxacc} 和 \ref{tab:FINALcsapsRungeacc}）。
+
+未来仍需解决的内容有：

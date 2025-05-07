@@ -1,0 +1,398 @@
+\cleardoublepage
+\section{平滑样条拟合（smoothing splines fitting）}
+\label{sec:FINALsmoothingSplineFitting}
+
+\subsection{三次平滑样条拟合—— ppForm }
+\label{sec:FINALcubicSmoothingSplineFitting}
+
+\begin{defn}[三次平滑样条拟合]
+  \label{def:FINALcubicSmoothingSplinesFitting}
+  给定一组严格递增的数据点$\mathbf{x}=\{x_{i}\}_{i=1}^{N}$
+  和对应的误差权重（error weight）$\mathbf{w}=\{w_{i}\}_{i=1}^{N}$。记
+  \begin{equation}
+    \label{eq:FINALSSFppFormSpace}
+    % \begin{aligned} 
+      X_{\textnormal{ppSSF}}:=
+    \{g\in C^{1}([x_{1},x_{N}])\cap
+      D^{2}([x_{1},x_{N}]\setminus \{x_{i}\}_{i=2}^{N-1}):
+      \ \lambda g''\in \mathbb{S}_{1}^{0}(\mathbf{x})
+    % &\ \lambda g''\in C([x_{1},x_{N}]),\\
+    % &\ \forall i=1,2,\cdots,N-1,\
+    %   g|_{[x_{i},x_{i+1}]}\in\mathbb{P}_{3}
+      \},
+    %\end{aligned}
+  \end{equation}
+  其中
+  $\lambda(t)$称为粗糙度权重（roughness measure），
+  是在$[x_{1},x_{N}]$上关于$\mathbf{x}$的分片常值函数，
+  即存在$\lambda_{1},\lambda_{2},\cdots,\lambda_{N-1}\in \mathbb{R}$，
+  使得
+  \begin{equation}
+    \label{eq:FINALlambdat}
+    \forall i=1,2,\cdots,N-1,\
+    \forall t\in (x_{i},x_{i+1}),\quad
+    \lambda(t)= \lambda_{i}\ge 0.
+  \end{equation}
+  给定平滑参数（smoothing parameter）$p\in [0,1]$
+  以及一组给定的值$\mathbf{y}=\{y_{i}\}_{i=1}^{N}$，
+  称样条函数$f\in X_{\textnormal{ppSSF}}$是$\{(x_{i},y_{i})\}_{i=1}^{N}$
+  在$X_{\textnormal{ppSSF}}$下的
+  三次平滑样条拟合，如果
+  \begin{equation}
+    \label{eq:FINALcubicSmoothingSpline}
+    % \forall g\in X,\quad
+    % pE(f)+(1-p)F(D^{2}f)\le
+    f= \arg\min_{g\in X_{\textnormal{ppSSF}}}\left( pE(g)+(1-p)F(D^{2}g)\right),
+  \end{equation}
+  其中
+  \begin{align}
+    \label{eq:FINALerrorMeasure}
+    E(g)&:=\sum_{i=1}^{N}w_{i}(y_{i}-g(x_{i}))^{2},\\
+    \label{eq:FINALroughnessMeasure}
+    F(D^{m}g)&:=\int_{x_{1}}^{x_{N}}
+               \lambda(t)|D^{m}g(t)|^{2}\mathrm{d}t
+  \end{align}
+  分别称为$g$的误差度量（error measure）和
+  粗糙度度量（roughness measure）。
+\end{defn}
+
+  当$\lambda(t)\equiv1$时，
+  $X_{\textnormal{ppSSF}}$就是我们熟知的$\mathbb{S}_{3}^{2}(\mathbf{x})$空间。
+  当存在$i_{0}\in[1,N-1]$使得$\lambda_{i_{0}}=0$时，这意味着
+  $x_{i}$到$x_{i+1}$之间的样条$f$可以有任意形状（但在两端处受限制），
+  因为这并不改变$F(D^{2}f)$的值，更不会改变$E(f)$的值。
+  Matlab 上没有考虑这种情况，
+  因此输出的样条中多项式的系数含有 Nan。
+  以下的讨论中，我们假设所有$\lambda_{i}\neq 0$。
+
+  对于$f\in X_{\textnormal{ppSSF}}$，由$\lambda f''$的连续性得：
+  \begin{align*}
+    (\lambda f'')(x_{1})&=\lambda_{1}f''(x_{1});\\
+    (\lambda f'')(x_{i})&=\lambda_{i-1}f''(x_{i}^{-})
+  =\lambda_{i}f''(x_{i}^{+}),\quad i=2,3,\cdots, N-1;\\
+  (\lambda f'')(x_{N})&=\lambda_{N-1}f''(x_{N}).
+  \end{align*}
+  仿照样条空间$\mathbb{S}_{3}^{2}(\mathbf{x})$中关于样条的
+  二阶导数之间的关系，可以得到以下结论。
+
+\begin{lem}
+  \label{lem:FINALsecondDerivativesRelation}
+  记$h_{i}:=x_{i+1}-x_{i}$, 
+  $c_{i}:=(\lambda f'')(x_{i})$, $f\in X_{\textnormal{ppSSF}}$。则
+  \begin{equation}
+    \label{eq:FINALsecondDerivativesRelation}
+      \ \ \ \tilde{h}_{i-1}c_{i-1}+
+      2(\tilde{h}_{i-1}+\tilde{h}_{i})c_{i}+
+      \tilde{h}_{i}c_{i+1}
+      =6\left(f[x_{i},x_{i+1}]-f[x_{i-1},x_{i}]\right),
+  \end{equation}
+  其中$\tilde{h}_{i}:={h_{i}}/{\lambda_{i}}$。
+\end{lem}
+\begin{proof}
+  将$f(x)$在$t=x_{i}$处(右侧)进行Taylor展开，得：
+  \begin{equation}
+    \label{eq:FINALTaylorRight}
+    f(t)=f(x_{i})+f'(x_{i})(t-x_{i})+
+                   \frac{c_{i}}{2\lambda_{i}}(t-x_{i})^{2}
+    +\frac{f'''(x_{i}^{+})}{6}(t-x_{i})^{3},\quad t\in [x_{i},x_{i+1}].
+  \end{equation}
+  将 \eqref{eq:FINALTaylorRight} 关于$t$求导两次，
+  并令$t\to x_{i+1}^{-}$，整理得：
+  \begin{equation}
+    \label{eq:FINALTaylorRightCoefs3}
+    f'''(x_{i}^{+})=
+    \frac{c_{i+1}-c_{i}}{\lambda_{i}h_{i}}. 
+  \end{equation}
+  将 \eqref{eq:FINALTaylorRightCoefs3} 代入
+  \eqref{eq:FINALTaylorRight}, 并令$t\to x_{i+1}^{-}$，整理得：
+  \begin{equation}
+    \label{eq:FINALTaylorRightCoefs1}
+    f'(x_{i})=f[x_{i},x_{i+1}]
+    -\frac{1}{6}\tilde{h}_{i}(c_{i+1}+2c_{i}).  
+  \end{equation}
+  类似地，将$f(x)$在$t=x_{i}$处(左侧)进行Taylor展开，
+  求导两次并令$t\to x_{i-1}^{+}$，可以得到
+  $f'''(x_{i}^{-})
+  =(c_{i}-c_{i-1})/(\lambda_{i-1}h_{i-1})$. 把它代入
+  Taylor展开式并令$t\to x_{i-1}^{+}$，得：
+  \begin{equation}
+    \label{eq:FINALTaylorLeftCoefs1}
+    f'(x_{i})=f[x_{i-1},x_{i}]
+    +\frac{1}{6}\tilde{h}_{i-1}(c_{i-1}+2c_{i}).  
+  \end{equation}
+  将(\ref{eq:FINALTaylorRightCoefs1})和
+  (\ref{eq:FINALTaylorLeftCoefs1})相减并整理，就得到了
+  (\ref{eq:FINALsecondDerivativesRelation})。
+\end{proof}
+
+接下来，我们需要利用~(\ref{eq:FINALsecondDerivativesRelation})
+来解决定义~\ref{def:FINALcubicSmoothingSplinesFitting} 中的问题。
+我们先来说明，这样求得的样条$f$必然是自然样条
+（即$f\in X_{\textnormal{ppSSF}}$
+满足$f''(x_{1})=f''(x_{N})=0$）。为证明此结论，我们
+先介绍一个引理。
+
+\begin{lem}[最小弯曲能，minimum bending energy]
+  \label{lem:FINALminimumBendingEnergy}
+  % 设$f\in X$为对$\{(x_{i},y_{i})\}_{i=1}^{N}$进行插值
+  % 得到的自然样条。则对满足$\lambda g''\in C([x_{1},x_{N}])$且
+  % $g(x_{i})=y_{i},\ i=1,\cdots,N$的$g\in D^{2}([x_{1},x_{N}])$，成立
+  对于任意
+  满足条件$g(x_{i})=y_{i},\ i=1,\cdots,N$的$g\in C^{1}([x_{1},x_{N}])\cap
+      D^{2}([x_{1},x_{N}]\setminus \{x_{i}\}_{i=2}^{N-1})$，
+  通过对数据点
+  $\{(x_{i},y_{i})\}_{i=1}^{N}$插值得到的自然样条$f\in X_{\textnormal{ppSSF}}$
+  满足
+  \begin{equation}
+    \label{eq:FINALminimumBendingEnergy}
+    F(D^{2}f)\le F(D^{2}g),
+  \end{equation}
+  其中$F(D^{2}f),\ F(D^{2}g)$如~(\ref{eq:FINALroughnessMeasure})中定义。
+  上式等号成立当且仅当$g=f$。
+\end{lem}
+\begin{proof}
+  定义$\eta(x)=g(x)-f(x)$。根据所给条件和$X_{\textnormal{ppSSF}}$的定义，我们有
+  $$\eta\in C^{1}([x_{1},x_{N}])\cap
+  D^{2}([x_{1},x_{N}]\setminus \{x_{i}\}_{i=2}^{N-2});\quad
+   \forall i=1,2,\cdots,N,\ \eta(x_{i})=0.$$
+  那么
+  \begin{align*}
+    \int_{x_{1}}^{x_{N}}\lambda(t)[g''(t)]^{2}\mathrm{d}t
+    &=\int_{x_{1}}^{x_{N}}\lambda(t)[f''(t)+\eta''(t)]^{2}\mathrm{d}t\\
+    &=\int_{x_{1}}^{x_{N}}\lambda(t)[f''(t)]^{2}\mathrm{d}t+\int_{x_{1}}^{x_{N}}
+    \lambda(t)[\eta''(t)]^{2}\mathrm{d}t
+    +2\int_{x_{1}}^{x_{N}}\lambda(t)f''(t)\eta''(t)\mathrm{d}t.
+  \end{align*}
+  由分部积分，
+  \begin{align*}
+    \int_{x_{1}}^{x_{N}}\lambda(t)f''(t)\eta''(t)\mathrm{d}t
+    &=\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}(\lambda f'')(t)\mathrm{d}\eta'\\
+    &=\sum_{i=1}^{N-1}(\lambda f'')(t)\eta'(t)|_{x_{i}}^{x_{i+1}}
+      -\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}\eta'(t)D(\lambda f'')(t)\mathrm{d}t\\
+    &=(\lambda f'')(x_{N})\eta'(x_{N})-(\lambda f'')(x_{1})\eta'(x_{1})
+      -\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}D(\lambda f'')(t)\mathrm{d}\eta\\
+    &=-\sum_{i=1}^{N-1}D(\lambda f'')(t)\eta(t)|_{x_{i}}^{x_{i+1}}
+      +\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}D^{2}(\lambda f'')(t)\eta(t)\mathrm{d}t\\
+    &=0,
+  \end{align*}
+  其中第四步来自$f''(x_{1})=f''(x_{N})=0$，第五步来自
+  $\eta(x_{i})=0$ 以及 $$\forall t\in(x_{i},x_{i+1}),\quad
+  D^{2}(\lambda f'')(t)=(\lambda D^{4}f)(t)=0.$$
+  因此，
+  \begin{displaymath}
+    \int_{x_{1}}^{x_{N}}\lambda(t)[g''(t)]^{2}\mathrm{d}t
+    =\int_{x_{1}}^{x_{N}}\lambda(t)[f''(t)]^{2}\mathrm{d}t+\int_{x_{1}}^{x_{N}}
+    \lambda(t)[\eta''(t)]^{2}\mathrm{d}t,
+  \end{displaymath}
+  命题得证。
+\end{proof}
+
+现在，我们总结一个定理，
+以解决定义~\ref{def:FINALcubicSmoothingSplinesFitting}
+中的问题。
+
+\begin{thm}
+  \label{thm:FINALcubicSmoothingSpline}
+  沿用定义~\ref{def:FINALcubicSmoothingSplinesFitting}
+  和引理~\ref{lem:FINALsecondDerivativesRelation} 中的记号，
+  $f\in X_{\textnormal{ppSSF}}$存在唯一，且为自然样条。
+\end{thm}
+\begin{proof}
+  假设存在$f\in X_{\textnormal{ppSSF}}$为满足问题的解。我们对
+  数据点$\{(x_{i},f(x_{i}))\}_{i=1}^{N}$在空间$X_{\textnormal{ppSSF}}$下进行
+  三次自然样条插值，得到样条$s(f;\mathbf{x})$。则$E(f)=E(s)$，
+  且由引理~\ref{lem:FINALminimumBendingEnergy}，
+  $F(D^{2}s)\le F(D^{2}f)$，等号成立当且仅当$f=s$，即$f$为自然样条。
+  由于我们需要保证$f$最小化$pE(f)+(1-p)F(D^{2}f)$，因此
+  只能$f=s$。故$f$唯一，且是自然样条。
+
+  接下来证$f$的存在性。
+  记$a_{i}:=f(x_{i}),\ i=1,2,\cdots,N$。
+  由引理~\ref{lem:FINALsecondDerivativesRelation} 知，
+  \begin{equation}
+    \label{eq:FINALRcQaInEquation}
+    \begin{array}{l}
+       \forall i=2,3,\cdots, N-1,\\
+       \tilde{h}_{i-1}c_{i-1}
+      +2(\tilde{h}_{i-1}+\tilde{h}_{i})c_{i}
+      +\tilde{h}_{i}c_{i+1}
+    = 6(f[x_{i+1},x_{i}]-f[x_{i},x_{i-1}])
+    =  6 \left( \frac{a_{i+1}-a_{i}}{h_{i}}
+      -\frac{a_{i}-a_{i-1}}{h_{i-1}}\right).
+    \end{array}
+  \end{equation}
+  令
+  \begin{align*}
+    \mathbf{c}
+    &:=[c_{2},c_{3},\cdots,c_{N-1}]^{T}\in \mathbb{R}^{N-2},\\
+    \mathbf{a}&:=[a_{1},a_{2},\cdots,a_{N}]^{T}\in \mathbb{R}^{N},
+  \end{align*}
+  注意到$f''(x_{1})=f''(x_{N})=0$，
+  从而$c_{1}=c_{N}=0$，
+  (\ref{eq:FINALRcQaInEquation}) 可以写成矩阵形式
+  \begin{equation}
+    \label{eq:FINALRcQaInMatrix}
+    R\mathbf{c}=6Q^{T}\mathbf{a},
+  \end{equation}
+  其中
+  \begin{align}
+    \label{eq:FINALppSSFR}
+       \tilde{R}&=\left(
+		\begin{array}{ccccc}
+			2(\tilde{h}_1+\tilde{h}_2)& \tilde{h}_2&& &\\
+			\tilde{h}_2& 2(\tilde{h}_2+\tilde{h}_3)& \tilde{h}_3&&\\
+			& \tilde{h}_3  &2(\tilde{h}_3+\tilde{h}_4)  &\ddots&\\
+			&&\ddots&\ddots&\tilde{h}_{N-2}\\
+			&&& \tilde{h}_{N-2} &2(\tilde{h}_{N-2}+\tilde{h}_{N-1})
+		\end{array}
+                  \right)\in \mathbb{R}^{(N-2)\times(N-2)},\\
+    \label{eq:FINALppSSFQ}
+     Q&=\left(
+      \begin{array}{cccc}
+        \frac{1}{h_1}& & &\\
+        -\frac{1}{h_1}-\frac{1}{h_2}& \frac{1}{h_{2}}& &\\
+        \frac{1}{h_2}& -\frac{1}{h_2}-\frac{1}{h_3}  &\ddots  &\\
+                     &\frac{1}{h_{3}}&\ddots&\frac{1}{h_{N-2}}\\
+                     &&\ddots&-\frac{1}{h_{N-2}}-\frac{1}{h_{N-1}}\\
+        &&&\frac{1}{h_{N-1}}
+      \end{array}
+      \right)\in \mathbb{R}^{N\times (N-2)}.
+  \end{align}
+  易见$R$对称正定，$Q$列满秩。
+  注意到对于任意一次多项式$l(x)=k_{l}x+b_{l}$，成立
+  \begin{align*}
+    \int_{a}^{b}l(x)^{2}\mathrm{d}x
+    =\frac{1}{k_{l}}\int_{l(a)}^{l(b)}y^{2}\mathrm{d}y
+    &=\frac{b-a}{l(b)-l(a)}\cdot \frac{l(b)^{3}-l(a)^{3}}{3}\\
+    &=\frac{b-a}{3}(l(a)^{2}+l(a)l(b)+l(b)^{2}),
+  \end{align*}
+  则由$(\lambda f'')(t)$在$[x_{i},x_{i+1}]$上为一次多项式，知
+  \begin{align*}
+    F(D^{2}f)&=\sum_{i=1}^{N-1}\int_{x_{i}}^{x_{i+1}}
+               \frac{1}{\lambda_{i}}|(\lambda f'')(t)|^{2}\mathrm{d}t\\
+        &=\frac{1}{3}\sum_{i=1}^{N-1}
+          \frac{h_{i}}{\lambda_{i}}(c_{i}^{2}+c_{i}c_{i+1}+c_{i+1}^{2})
+    =\frac{1}{6}\mathbf{c}^{T}R\mathbf{c}.
+  \end{align*}
+  又
+  \begin{displaymath}
+    E(f)=\sum_{i=1}^{N}w_{i}(y_{i}-f(x_{i}))^{2}
+    =(\mathbf{y}-\mathbf{a})^{T}D^{-2}(\mathbf{y}-\mathbf{a}),
+  \end{displaymath}
+  其中$D=\text{diag}(w_{1}^{-\frac{1}{2}},w_{2}^{-\frac{1}{2}},\cdots,
+  w_{N}^{-\frac{1}{2}})$.
+  因此，
+  \begin{align*}
+    pE(f)+(1-p)F(D^{2}f) 
+    = p(\mathbf{y}-\mathbf{a})^{T}D^{-2}(\mathbf{y}-\mathbf{a})+
+    \frac{1-p}{6}\mathbf{c}^{T}R\mathbf{c}.
+  \end{align*}
+  由(\ref{eq:FINALRcQaInMatrix})和$R$的可逆性知，
+  $\mathbf{c}=6R^{-1}Q^{T}\mathbf{a}$。从而
+  \begin{equation}
+    \label{eq:FINALErrorEandF}
+     pE(f)+(1-p)F(D^{2}f)
+     =p(\mathbf{y}-\mathbf{a})^{T}D^{-2}(\mathbf{y}-\mathbf{a})+
+    6(1-p)\mathbf{a}^{T}QR^{-1}Q^{T}\mathbf{a}.
+  \end{equation}
+  由$D^{-2}$和$QR^{-1}Q^{T}$均为实对称矩阵，
+  我们对 \eqref{eq:FINALErrorEandF} 关于$\mathbf{a}$求梯度，知
+  (\ref{eq:FINALErrorEandF})取得最小值当且仅当$\mathbf{a}$满足
+  正规方程
+  \begin{displaymath}
+    -2pD^{-2}(\mathbf{y}-\mathbf{a})+
+    12(1-p)QR^{-1}Q^{T}\mathbf{a}=0,
+  \end{displaymath}
+  即
+  \begin{displaymath}
+    pD^{-2}(\mathbf{y}-\mathbf{a})=
+    6(1-p)QR^{-1}Q^{T}\mathbf{a}.
+  \end{displaymath}
+  将其两边左乘$Q^{T}D^{2}$，结合(\ref{eq:FINALRcQaInMatrix})式，整理得: 
+  \begin{equation}
+    \label{eq:FINALMatrixEquationForppSSF}
+    (pR+6(1-p)Q^{T}D^{2}Q)\mathbf{u}=Q^{T}\mathbf{y},
+  \end{equation}
+  其中$\mathbf{u}$满足$\mathbf{c}=6p\mathbf{u}$。
+  由$R,\ D$的正定性和$Q$的列满秩性知，
+  (\ref{eq:FINALMatrixEquationForppSSF})的系数矩阵是对称正定的，从而
+  该矩阵方程存在唯一解$\mathbf{u}$。
+  进一步地，可以计算
+  \begin{align*}
+    &\ \mathbf{c}=6p\mathbf{u},\\
+    &\ \mathbf{a} = \mathbf{y} - 6(1-p)D^{2}Q\mathbf{u}
+  \end{align*}
+  以得到$f''(x_{i}^{+})$ 和 $f(x_{i})$。
+  然后通过
+  (\ref{eq:FINALTaylorRightCoefs3})
+  和(\ref{eq:FINALTaylorRightCoefs1}),
+  可以分别求出$f'''(x_{i}^{+})$和$f'(x_{i})$。综上，
+  样条函数$f$被唯一确定。
+\end{proof}
+
+我们可以关注当$p$取特殊值时对应的情况。
+
+  若$p=0$，则样条函数$f$使$F(f)$的值最小。当$F(f)=0$时，
+  代表$f''\equiv 0$，样条退化为了直线，
+  因此$\mathbf{c}$解出来后应该是$\mathbf{0}$。
+  为了照顾到此情况，我们在方程组
+  (\ref{eq:FINALMatrixEquationForppSSF})中求解的是$\mathbf{u}$，
+  不影响$\mathbf{c}=6\cdot0\cdot \mathbf{u}=\mathbf{0}$
+  和$\mathbf{a}$的计算。
+
+  若$p=1$，则样条函数$f$使$E(f)$的值最小。当$E(f)=0$时，
+  代表$f(x_{i})=y_{i},\ i=1,2,\cdots,N$，原问题变为样条插值问题。
+
+  而当$0<p<1$时，这通常意味着我们需要在插值与平滑中做一个平衡。当
+  我们需要拟合一条看上去不太平滑的曲线时，往往需要牺牲插值上的精确，
+  而去提升拟合曲线的平滑性。对于$p=0.4$以及函数$y=1/(1+25x^{2})$，
+  图 \ref{fig:FINALcsapsRunge} 验证了此结果。
+
+  接下来，我们需要求解矩阵方程(\ref{eq:FINALMatrixEquationForppSSF})。
+  由$R,Q$和$D$的性质知，
+  $A:=pR+6(1-p)Q^{T}D^{2}Q$是一个对称正定的五对角矩阵。
+  我们可以对$A$使用$LDL^{T}$分解，其中单位下三角矩阵$L$的带宽为2。
+  因此，矩阵方程的求解是容易的。
+
+  结合定义~\ref{def:FINALcubicSmoothingSplinesFitting}
+  和定理~\ref{thm:FINALcubicSmoothingSpline}，我们得到
+  求解三次平滑样条拟合的算法 \ref{alg:FINALppSSF}。
+
+\begin{algorithm}[htb]
+\caption{三次平滑样条拟合：$f=\textnormal{csaps}(\mathbf{x}, \mathbf{y}, \mathbf{w}, \lambda, p)$}
+\label{alg:FINALppSSF}
+\begin{algorithmic}[1] 
+  \renewcommand{\algorithmicrequire}{ \textbf{Input:}} %Use Input in the format of Algorithm
+  \REQUIRE  %算法的输入参数：Input
+  定义~\ref{def:FINALcubicSmoothingSplinesFitting} 中的$\mathbf{x}, \mathbf{y}, \mathbf{w}, \lambda, p$
+    
+      \renewcommand{\algorithmicrequire}{ \textbf{Preconditions:}} %Use Input in the format of Algorithm
+  %\REQUIRE  %算法的输入参数：Preconditions
+      
+    \renewcommand{\algorithmicensure}{ \textbf{Output:}} %UseOutput in the format of Algorithm
+  \ENSURE  %算法的输出：Output
+  定义~\ref{def:FINALcubicSmoothingSplinesFitting} 中的$f$
+\renewcommand{\algorithmicensure}{ \textbf{Postconditions:}} %UseOutput in the format of Algorithm
+\ENSURE  %算法的输出：Postconditions
+    $f$为 pp 格式，满足自然边界条件
+    \STATE 按(\ref{eq:FINALppSSFR}) 和(\ref{eq:FINALppSSFQ})分别装配矩阵$R,\ Q$;
+    $D\leftarrow \text{diag}(w_{1}^{-\frac{1}{2}},w_{2}^{-\frac{1}{2}},\cdots, w_{N}^{-\frac{1}{2}})$
+    \STATE $A\leftarrow pR+6(1-p)Q^{T}D^{2}Q$; $\mathbf{u}\leftarrow Q^{T}\mathbf{y}$
+    \STATE $(L,D_{0})\leftarrow LDL^{T}(A)$\hfill // 对$A$进行$LDL^{T}$分解，得到单位下三角矩阵$L$和对角阵$D_{0}$
+    \STATE $\mathbf{u}\leftarrow L^{-1}\mathbf{u}$; $\mathbf{u}\leftarrow D_{0}^{-1}\mathbf{u}$; $\mathbf{u}\leftarrow L^{-T}\mathbf{u}$
+    \STATE $\mathbf{a}\leftarrow \mathbf{y}-6(1-p)D^{2}Q\mathbf{u}$; $\mathbf{c}\leftarrow 6p\mathbf{u}$
+    \FOR{$i=1 \text{ to } N-1$}
+    \STATE $f(x_{i})\leftarrow a_{i}$; $f'(x_{i})\leftarrow \frac{a_{i+1}-a_{i}}{h_{i}}-\frac{h_{i}}{6\lambda_{i}}(c_{i+1}-c_{i})$;
+    $f''(x_{i}^{+})\leftarrow \frac{c_{i}}{\lambda_{i}}$;
+    $f'''(x_{i}^{+})\leftarrow \frac{c_{i+1}-c_{i}}{\lambda_{i}h_{i}}$
+    \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+在后续的数值测试（见第 \ref{sec:FINALTest} 节）中，
+我们发现所求出的 pp 样条的多项式系数的精度下降地很快。
+实际上，由于~(\ref{eq:FINALMatrixEquationForppSSF}) 本质上是一个正规方程组，
+当求解规模变大时，系数矩阵条件数平方增长，求解精度会变的不稳定。
+具体地，当区间固定时，随着$N$的增大，步长$h_{i}$不断地减小，
+而矩阵$Q$中的元素均为$O(h^{-1})=O(N)$的，这导致方程系数矩阵
+$pR+6(1-p)Q^{T}D^{2}Q$的条件数平方增长，求解不稳定。

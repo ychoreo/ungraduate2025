@@ -6,6 +6,8 @@
 
 \RequirePackage{kvoptions}
 \RequirePackage{amsmath}
+\RequirePackage{amsthm}
+\RequirePackage{enumerate}
 
 \SetupKeyvalOptions{
     family=zjuthesis,
@@ -120,7 +122,7 @@
 % \numberwithin{equation}{chapter}
 % \theoremstyle{definition}
 
-\newtheorem{thm}{定理}[chapter]
+\newtheorem{thm}{定理}[section]
 \newtheorem{alg}[thm]{算法}
 \newtheorem{asm}[thm]{假设}
 \newtheorem{axm}[thm]{公理}
@@ -135,6 +137,23 @@
 \newtheorem{lem}[thm]{引理}
 \newtheorem{ntn}{记号}
 \newtheorem{prop}[thm]{命题}
-\newtheorem{rem}{注记}[chapter]
+\newtheorem{rem}{注记}[section]
 \newtheorem{rul}[thm]{规则}
 \renewcommand{\proofname}{证明}
+\RequirePackage{algorithm}
+\RequirePackage{algorithmic}
+
+% 修改编号格式
+\renewcommand{\thethm}{\arabic{section}.\arabic{thm}}
+\renewcommand{\thealg}{\arabic{section}.\arabic{alg}}
+\renewcommand{\theasm}{\arabic{section}.\arabic{asm}}
+\renewcommand{\theaxm}{\arabic{section}.\arabic{axm}}
+\renewcommand{\thecoro}{\arabic{section}.\arabic{coro}}
+\renewcommand{\thedefn}{\arabic{section}.\arabic{defn}}
+\renewcommand{\theexm}{\arabic{section}.\arabic{exm}}
+\renewcommand{\theexm}{\arabic{section}.\arabic{exm}}
+\renewcommand{\thefrm}{\arabic{section}.\arabic{frm}}
+\renewcommand{\thelem}{\arabic{section}.\arabic{lem}}
+\renewcommand{\theprop}{\arabic{section}.\arabic{prop}}
+\renewcommand{\therem}{\arabic{section}.\arabic{rem}}
+\renewcommand{\therul}{\arabic{section}.\arabic{rul}}

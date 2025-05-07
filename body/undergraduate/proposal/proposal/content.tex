@@ -17,7 +17,7 @@ $x_{i}$关于$i$严格递增，$w_{i}>0$。
   \label{eq:DiscreteLeastSquaresSplinesApproximation}
   \sum_{i=1}^{N}w_{i}(y_{i}-f(x_{i}))^{2}
 \end{equation}
-取得最小值。与这个问题相对应的是 MATLAB 曲线拟合工具箱中的 spap2 函数。
+取得最小值。与这个问题相对应的是 Matlab 曲线拟合工具箱中的 spap2 函数。
 
 这个$f$存在的前提是，存在$\mathbf{x}$的子列$\{x_{j_{i}}\}_{i=1}^{n}$，
 其满足 Schoenberg-Whitney 条件：
@@ -72,11 +72,11 @@ $x_{i}$关于$i$严格递增，$w_{i}>0$。
   p\sum_{i=1}^{N}w_{i}(y_{i}-f(x_{i}))^{2}+
   (1-p)\int_{x_{1}}^{x_{N}}\lambda(t)|f''(t)|^{2}\mathrm{d}t
 \end{equation}
-取得最小值。与这个问题相对应的是 MATLAB 曲线拟合工具箱中的 csaps 函数。
+取得最小值。与这个问题相对应的是 Matlab 曲线拟合工具箱中的 csaps 函数。
 当$\lambda\equiv1$时，有较为经典的求解方法
 \cite{GuideToSplines}。
 对于$\lambda$不恒等于1的情形，通过图~\ref{fig:cubicSplinesSpaceCompare}
-中对比 MATLAB 中样条曲线的结果，我们发现
+中对比 Matlab 中样条曲线的结果，我们发现
 $f$并没有落在通常的
 \begin{equation}
   \label{eq:cubicSplinesSpace}
@@ -110,7 +110,7 @@ $f$并没有落在通常的
     \includegraphics[width=\linewidth]{eps/lamfDeriv2.eps}  
     \caption*{$\lambda f''$的图像，在$[x_{1},x_{N}]$上是连续的}  
   \end{minipage}    
-  \caption{ MATLAB 中通过 csaps 函数得到的样条$f$，
+  \caption{ Matlab 中通过 csaps 函数得到的样条$f$，
     其中$\lambda_{i}$在中间两段区间上取值为100，在其余区间上取值为1。}
   \label{fig:cubicSplinesSpaceCompare}  
 \end{figure}
@@ -129,12 +129,12 @@ $x_{i}$关于$i$严格递增，$w_{i}>0$。
   \label{eq:FDmf}
   F(D^{m}f):=\int_{x_{1}}^{x_{N}}\lambda(t)|D^{m}f(t)|^{2}\mathrm{d}t
 \end{equation}
-取到最小值。与这个问题相对应的是 MATLAB 曲线拟合工具箱中的 spaps 函数。
+取到最小值。与这个问题相对应的是 Matlab 曲线拟合工具箱中的 spaps 函数。
 同时，解决此问题后，
 我们还能得到一个平滑参数（smoothing parameter）$\rho$，
 它使得$f$被确定为表达式$\rho E(f) + F(D^m f)$的唯一最小化函数，
 且使得$E(f)=S$成立。
-由于样条函数的分片多项式不需要太高的阶数，结合 MATLAB 的函数实现，
+由于样条函数的分片多项式不需要太高的阶数，结合 Matlab 的函数实现，
 在本项目的工作中，我们仅编程实现$m=1,2,3$的情形。
 
 \subsection{技术路线}
@@ -167,7 +167,7 @@ $x_{i}$关于$i$严格递增，$w_{i}>0$。
 目前我们已经有比较丰富的代码基础。具体地，我们已经构建了
 pp 样条和 B 样条两个派生类，并实现了它们的一些基本功能。
 我们已经实现了
-B 样条插值函数（对应于MATLAB 曲线拟合工具箱中的 spapi 函数），
+B 样条插值函数（对应于Matlab 曲线拟合工具箱中的 spapi 函数），
 此问题可以转化为求解一个线性方程组，
 其中系数矩阵为几乎块对角的方阵，也可以进行块 QR 分解。
 因此，我们可以仿照这个过程，编写离散最小二乘样条逼近问题对应的代码。
